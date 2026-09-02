@@ -1,0 +1,15 @@
+align:
+  output_dir: "results/align"
+  logs_dir: "logs/align"
+  benchmarks_dir: "benchmarks/align"
+  threads_aln: 8
+  mem_aln: 50G
+  aligner: "minimap2"
+  aligner_opts: "--eqx -ax lr:hq -I 8G"
+  samtools_view_flag: 4
+  samples:
+    - name: sample2
+      asm_dir: test/sample/asm
+      asm_rgx: ".*\\.fa$"
+      read_dir: test/sample/reads
+      read_rgx: ".*\\.fq.gz$"

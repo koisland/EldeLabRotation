@@ -1,0 +1,9 @@
+
+include: "rules/0_common.smk"
+include: "rules/1_align_reads.smk"
+include: "rules/2_call_vars.smk"
+
+
+rule all:
+    input:
+        expand(rules.self_aln_align.input, sm=SAMPLE_NAMES),
