@@ -9,3 +9,6 @@ version = "0.1.0"
 [dependencies]
 snakemake = { version = ">=9.26.1,<10", channel = "bioconda" }
 snakefmt = { version = ">=2.0.3,<3", channel = "bioconda" }
+snakemake-executor-plugin-slurm = ">=2.8.0,<3"
+conda = "*"
+ruff = "*"
