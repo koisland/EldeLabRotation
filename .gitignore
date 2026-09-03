@@ -3,6 +3,7 @@
 !.pixi/config.toml
 
 # snakemake
+data
 logs
 results
 benchmarks

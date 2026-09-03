@@ -1,15 +1,37 @@
 align:
+  # See https://github.com/logsdon-lab/Snakemake-Aligner
   output_dir: "results/align"
   logs_dir: "logs/align"
   benchmarks_dir: "benchmarks/align"
   threads_aln: 8
   mem_aln: 50G
   aligner: "minimap2"
-  aligner_opts: "--eqx -ax lr:hq -I 8G"
+  # See preset options
+  # https://lh3.github.io/minimap2/minimap2.html
+  aligner_opts: "--eqx -ax map-hifi -I 8G"
+  # Omit unmapped reads. This is the inverse flag -F of samtools view.
+  # This param could probably be named better
+  # See here for flags
+  # https://broadinstitute.github.io/picard/explain-flags.html
   samtools_view_flag: 4
   samples:
-    - name: sample2
-      asm_dir: test/sample/asm
-      asm_rgx: ".*\\.fa$"
-      read_dir: test/sample/reads
-      read_rgx: ".*\\.fq.gz$"
+    - name: CT15
+      asm_fa: data/PrimateTestisData/asm/GCA_965153145.1.fa.gz
+      reads: [
+        data/PrimateTestisData/reads/ERR14376286.bam
+      ]
+    - name: CT22
+      asm_fa: data/PrimateTestisData/asm/GCA_965153165.1.fa.gz
+      reads: [
+        data/PrimateTestisData/reads/ERR14376368.bam
+      ]
+    - name: CT28
+      asm_fa: data/PrimateTestisData/asm/GCA_965153115.1.fa.gz
+      reads: [
+        data/PrimateTestisData/reads/ERR14376446.bam
+      ]
+    - name: CT32
+      asm_fa: data/PrimateTestisData/asm/GCA_965153035.1.fa.gz
+      reads: [
+        data/PrimateTestisData/reads/ERR14368733.bam
+      ]

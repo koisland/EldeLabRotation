@@ -1,9 +1,16 @@
+rerun-incomplete: True
+show-failed-logs: True
+rerun-triggers: mtime
+restart-times: 0
+software-deployment-method:
+- conda
+show-failed-logs: True
 executor: slurm
 jobs: 100
 latency-wait: 60
 max-jobs-per-second: 50
 default-resources:
-- mem=64G
+- mem=8G
 - runtime=120
 - slurm_partition=elde-np
 - slurm_account=elde-np

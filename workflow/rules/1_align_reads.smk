@@ -3,11 +3,7 @@ ALN_CFG = config["align"]
 
 module Align:
     snakefile:
-        github(
-            "logsdon-lab/Snakemake-Aligner",
-            path="workflow/Snakefile",
-            commit="18b558fe551b12186ee74b535fb37849d3d36572",
-        )
+        "Snakemake-Aligner/workflow/Snakefile"
     config:
         ALN_CFG
 

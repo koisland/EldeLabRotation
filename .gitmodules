@@ -1,0 +1,4 @@
+[submodule "workflow/rules/Snakemake-Aligner"]
+	path = workflow/rules/Snakemake-Aligner
+	url = https://github.com/logsdon-lab/Snakemake-Aligner.git
+	ignore = dirty
