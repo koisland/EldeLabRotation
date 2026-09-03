@@ -4,7 +4,7 @@ align:
   logs_dir: "logs/align"
   benchmarks_dir: "benchmarks/align"
   threads_aln: 8
-  mem_aln: 50G
+  mem_aln: 70G
   aligner: "minimap2"
   # See preset options
   # https://lh3.github.io/minimap2/minimap2.html

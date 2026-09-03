@@ -11,6 +11,6 @@ latency-wait: 60
 max-jobs-per-second: 50
 default-resources:
 - mem=8G
-- runtime=120
+- runtime=300
 - slurm_partition=elde-np
 - slurm_account=elde-np
