@@ -1,0 +1,4 @@
+https://www.ebi.ac.uk/ena/browser/api/fasta/GCA_965153145.1?download=true&gzip=true
+https://www.ebi.ac.uk/ena/browser/api/fasta/GCA_965153165.1?download=true&gzip=true
+https://www.ebi.ac.uk/ena/browser/api/fasta/GCA_965153115.1?download=true&gzip=true
+https://www.ebi.ac.uk/ena/browser/api/fasta/GCA_965153035.1?download=true&gzip=true

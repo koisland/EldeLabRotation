@@ -1,0 +1,4 @@
+ftp://ftp.sra.ebi.ac.uk/vol1/err/ERR143/086/ERR14376286/ERR14376286.bam
+ftp://ftp.sra.ebi.ac.uk/vol1/err/ERR143/033/ERR14368733/ERR14368733.bam
+ftp://ftp.sra.ebi.ac.uk/vol1/err/ERR143/068/ERR14376368/ERR14376368.bam
+ftp://ftp.sra.ebi.ac.uk/vol1/err/ERR143/046/ERR14376446/ERR14376446.bam
