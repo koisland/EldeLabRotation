@@ -26,7 +26,7 @@ align:
   output_dir: "results/align"
   logs_dir: "logs/align"
   benchmarks_dir: "benchmarks/align"
-  threads_aln: 8
+  threads_aln: 12
   mem_aln: 70G
   aligner: "minimap2"
   # See preset options

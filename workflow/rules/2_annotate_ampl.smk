@@ -5,10 +5,7 @@ ANNOT_BMKDIR = config["annot"]["benchmarks_dir"]
 
 ANNOT_CFG = {
     "samples": {
-        sm: {
-            "fa": rules.self_aln_merge_asm_files.output.asm
-        }
-        for sm in SAMPLE_NAMES
+        sm: {"fa": rules.self_aln_merge_asm_files.output.asm} for sm in SAMPLE_NAMES
     },
     "output_dir": ANNOT_OUTDIR,
     "log_dir": ANNOT_LOGDIR,
@@ -17,9 +14,11 @@ ANNOT_CFG = {
         "species": config["annot"]["repeatmasker_species"],
         "engine": config["annot"]["repeatmasker_engine"],
         "threads": config["annot"]["threads_annot"],
-        "mem": config["annot"]["mem_annot"]
-    }
+        "mem": config["annot"]["mem_annot"],
+    },
 }
+
+
 module AnnotateRepeats:
     snakefile:
         "Snakemake-Repeat-Annotation/workflow/Snakefile"
@@ -28,6 +27,7 @@ module AnnotateRepeats:
 
 
 use rule * from AnnotateRepeats as annot_*
+
 
 # rule run_biser:
 #     input:
@@ -43,5 +43,4 @@ use rule * from AnnotateRepeats as annot_*
 
 rule annote_ampl_all:
     input:
-        rules.annot_all.input
-
+        rules.annot_all.input,
