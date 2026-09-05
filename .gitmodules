@@ -2,3 +2,7 @@
 	path = workflow/rules/Snakemake-Aligner
 	url = https://github.com/logsdon-lab/Snakemake-Aligner.git
 	ignore = dirty
+[submodule "workflow/rules/Snakemake-Repeat-Annotation"]
+	path = workflow/rules/Snakemake-Repeat-Annotation
+	url = https://github.com/logsdon-lab/Snakemake-Repeat-Annotation.git
+	ignore = dirty

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Session genome="/uufs/chpc.utah.edu/common/home/u1643401/projects/sperm_ampl_sv/data/PrimateTestisData/asm/GCA_965153145.1.fa.gz" locus="ENA|CBCUDJ010000001|CBCUDJ010000001.1:0-55531710" version="8">
+    <Resources>
+        <Resource path="/uufs/chpc.utah.edu/common/home/u1643401/projects/sperm_ampl_sv/results/align/CT15.bam" type="bam"/>
+    </Resources>
+    <Panel height="510" name="Panel1788543299536" width="1831">
+        <Track attributeKey="CT15.bam Coverage" autoScale="true" clazz="org.broad.igv.sam.CoverageTrack" fontSize="10" id="/uufs/chpc.utah.edu/common/home/u1643401/projects/sperm_ampl_sv/results/align/CT15.bam_coverage" name="CT15.bam Coverage" snpThreshold="0.2" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="44.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track attributeKey="CT15.bam Junctions" autoScale="true" clazz="org.broad.igv.sam.SpliceJunctionTrack" fontSize="10" groupByStrand="false" height="60" id="/uufs/chpc.utah.edu/common/home/u1643401/projects/sperm_ampl_sv/results/align/CT15.bam_junctions" maxdepth="50" name="CT15.bam Junctions" visible="false"/>
+        <Track attributeKey="CT15.bam" clazz="org.broad.igv.sam.AlignmentTrack" color="185,185,185" displayMode="SQUISHED" experimentType="THIRD_GEN" fontSize="10" id="/uufs/chpc.utah.edu/common/home/u1643401/projects/sperm_ampl_sv/results/align/CT15.bam" name="CT15.bam" visible="true">
+            <RenderOptions duplicatesOption="FILTER" hideSmallIndels="true" smallIndelThreshold="2"/>
+        </Track>
+    </Panel>
+    <Panel height="111" name="FeaturePanel" width="1831">
+        <Track attributeKey="Reference sequence" clazz="org.broad.igv.track.SequenceTrack" fontSize="10" id="Reference sequence" name="Reference sequence" sequenceTranslationStrandValue="+" shouldShowTranslation="false" visible="true"/>
+    </Panel>
+    <PanelLayout dividerFractions="0.009419152276295133,0.8178963893249608"/>
+    <HiddenAttributes>
+        <Attribute name="DATA FILE"/>
+        <Attribute name="DATA TYPE"/>
+        <Attribute name="NAME"/>
+    </HiddenAttributes>
+</Session>

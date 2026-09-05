@@ -13,8 +13,10 @@ environments:
     - url: https://conda.anaconda.org/bioconda/
     packages:
       linux-64:
+      - conda: https://conda.anaconda.org/bioconda/linux-64/bigtools-0.5.8-hfa8f182_0.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/htslib-1.24-ha79157c_0.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/samtools-1.24-h9dcdb79_1.conda
+      - conda: https://conda.anaconda.org/bioconda/linux-64/seqkit-2.13.0-he881be0_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakefmt-2.0.3-pyhdfd78af_1.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-9.26.1-hdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-2.8.0-pyhdfd78af_0.conda
@@ -226,6 +228,21 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/yte-1.9.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
 packages:
+- conda: https://conda.anaconda.org/bioconda/linux-64/bigtools-0.5.8-hfa8f182_0.conda
+  sha256: b007e7a5333ad7addfd626727de51af3ffb55e356c3e6ba760ac35f1f00e210a
+  md5: 6190c15ffccc2fe59a9b13c2d4cbd8b4
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=14
+  constrains:
+  - __glibc >=2.17
+  license: MIT
+  license_family: MIT
+  run_exports:
+    weak:
+    - bigtools >=0.5.8,<0.6.0a0
+  size: 4082703
+  timestamp: 1780773979587
 - conda: https://conda.anaconda.org/bioconda/linux-64/htslib-1.24-ha79157c_0.conda
   sha256: 97e0f0b8700f56b1ade3034f81070ede705fce3ef9a1b5f15e79e3eb9997ac17
   md5: 232775112c6fea38e9e7c25d2a58d7d2
@@ -260,6 +277,16 @@ packages:
     - samtools >=1.24,<2.0a0
   size: 504278
   timestamp: 1784062341168
+- conda: https://conda.anaconda.org/bioconda/linux-64/seqkit-2.13.0-he881be0_0.conda
+  sha256: 538ff4ab33819598e45939fe36ea7f4505afba62e90a7cbd95c6f63493aee6d4
+  md5: d4e8a7c9d4b694e70552a84f662ea354
+  license: MIT
+  license_family: MIT
+  run_exports:
+    weak:
+    - seqkit >=2.13.0,<3.0a0
+  size: 6910586
+  timestamp: 1772198535227
 - conda: https://conda.anaconda.org/bioconda/noarch/snakefmt-2.0.3-pyhdfd78af_1.conda
   sha256: bc5d29e4fa22bf6f17f69c968ffba24967ec360fbb42f5fde5df5e5e2bbab6a9
   md5: e9f9d8d88a22521378dace6b7399d59b

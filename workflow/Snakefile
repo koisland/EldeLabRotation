@@ -2,8 +2,10 @@
 include: "rules/0_common.smk"
 include: "rules/1_align_reads.smk"
 include: "rules/2_call_vars.smk"
+include: "rules/2_annotate_ampl.smk"
 
 
 rule all:
     input:
-        expand(rules.self_aln_align.input, sm=SAMPLE_NAMES),
+        rules.read_align_all.input,
+        rules.annote_ampl_all.input,

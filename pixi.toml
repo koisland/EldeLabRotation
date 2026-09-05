@@ -5,6 +5,7 @@ platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
+fmt = "snakefmt . && ruff format ."
 
 [dependencies]
 snakemake = { version = ">=9.26.1,<10", channel = "bioconda" }
@@ -13,3 +14,5 @@ snakemake-executor-plugin-slurm = ">=2.8.0,<3"
 conda = "*"
 ruff = "*"
 samtools = { version = ">=1.24,<2", channel = "bioconda" }
+bigtools = ">=0.5.8,<0.6"
+seqkit = ">=2.13.0,<3"

@@ -20,3 +20,6 @@ pixi run snakemake \
 --profile workflow/profiles/slurm-executor/ \
 -j 50 -np 
 ```
+
+## Limitations
+* If using whole testis, no way to determine germline vs somatic tissues. Previous Schierup study is not reproducible as provided uBAMs do not have methylation information/kinetics.
