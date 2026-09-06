@@ -1,24 +1,24 @@
 samples:
-  - name: CT15
-    asm_fa: data/PrimateTestisData/asm/GCA_965153145.1.fa.gz
-    reads: [
-      data/PrimateTestisData/reads/ERR14376286.bam
-    ]
+  # - name: CT15
+  #   asm_fa: data/PrimateTestisData/asm/GCA_965153145.1.fa.gz
+  #   reads: [
+  #     data/PrimateTestisData/reads/ERR14376286.bam
+  #   ]
   - name: CT22
     asm_fa: data/PrimateTestisData/asm/GCA_965153165.1.fa.gz
     reads: [
       data/PrimateTestisData/reads/ERR14376368.bam
     ]
-  - name: CT28
-    asm_fa: data/PrimateTestisData/asm/GCA_965153115.1.fa.gz
-    reads: [
-      data/PrimateTestisData/reads/ERR14376446.bam
-    ]
-  - name: CT32
-    asm_fa: data/PrimateTestisData/asm/GCA_965153035.1.fa.gz
-    reads: [
-      data/PrimateTestisData/reads/ERR14368733.bam
-    ]
+  # - name: CT28
+  #   asm_fa: data/PrimateTestisData/asm/GCA_965153115.1.fa.gz
+  #   reads: [
+  #     data/PrimateTestisData/reads/ERR14376446.bam
+  #   ]
+  # - name: CT32
+  #   asm_fa: data/PrimateTestisData/asm/GCA_965153035.1.fa.gz
+  #   reads: [
+  #     data/PrimateTestisData/reads/ERR14368733.bam
+  #   ]
 
 # Align reads to DSA
 align:
@@ -26,8 +26,8 @@ align:
   output_dir: "results/align"
   logs_dir: "logs/align"
   benchmarks_dir: "benchmarks/align"
-  threads_aln: 12
-  mem_aln: 70G
+  threads_aln: 8
+  mem_aln: 80G
   aligner: "minimap2"
   # See preset options
   # https://lh3.github.io/minimap2/minimap2.html
@@ -45,8 +45,11 @@ annot:
   output_dir: "results/annot"
   logs_dir: "logs/annot"
   benchmarks_dir: "benchmarks/annot"
-  threads_annot: 8
-  mem_annot: 30G
+  threads_rm: 2
+  mem_rm: 8G
   # RepeatMasker species
-  repeatmasker_engine: rmblast
-  repeatmasker_species: primates
+  engine_rm: rmblast
+  species_rm: primates
+  # biser settings
+  threads_biser: 4
+  mem_biser: 40G
