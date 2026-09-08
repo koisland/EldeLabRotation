@@ -1,6 +1,18 @@
 # RECallS
 (R)ecombination (E)vent (call)er from (S)perm long-read sequencings data
 
+## Usage
+Align reads to donor-specific assembly.
+```bash
+minimap -ax map-hifi -I8g --eqx "${sample}.fa.gz" "${sample}.fq.gz" \
+    | samtools view -F 4 -bh -o "${sample}.bam"
+```
+
+Then run:
+```bash
+./target/release/RECallS call -i "${sample}.bam" -f "${sample}.fa.gz"
+```
+
 ## Why?
 No one seems to care about building decent, isolated CLI tools...
 * Porsborg et al.
