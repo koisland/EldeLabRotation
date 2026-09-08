@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<Session genome="/uufs/chpc.utah.edu/common/home/u1643401/projects/sperm_ampl_sv/data/PrimateTestisData/asm/GCA_965153145.1.fa.gz" locus="ENA|CBCUDJ010000001|CBCUDJ010000001.1:0-55531710" version="8">
+<Session genome="/uufs/chpc.utah.edu/common/home/u1643401/projects/sperm_ampl_sv/results/align/CT15_merged_dedup_asm.fa" locus="ENA_CBCUDJ010000001_CBCUDJ010000001.1:0-55531710" version="8">
     <Resources>
         <Resource path="/uufs/chpc.utah.edu/common/home/u1643401/projects/sperm_ampl_sv/results/align/CT15.bam" type="bam"/>
     </Resources>
