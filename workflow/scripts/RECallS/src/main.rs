@@ -54,6 +54,17 @@ pub(crate) fn get_aligned_pairs(
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 struct PosNt(usize, char);
 
+
+fn get_or_add_node(wt: PosNt, graph: &mut Graph<PosNt, usize>, node_wt_map: &mut HashMap<PosNt, NodeIndex>) -> NodeIndex {
+    if let Some(node_idx) = node_wt_map.get(&wt) {
+        *node_idx
+    } else {
+        let node_idx: petgraph::prelude::NodeIndex = graph.add_node(wt.clone());
+        node_wt_map.insert(wt, node_idx);
+        node_idx
+    }
+}
+
 fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
     let mut indexed_reader = bam::io::indexed_reader::Builder::default().build_from_path(&aln)?;
     let header = indexed_reader.read_header()?;
@@ -116,13 +127,7 @@ fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
                 Kind::SequenceMismatch => {
                     // Add node for refpos and the nt.
                     let wt = PosNt(refpos, nt);
-                    let node_idx = if let Some(node_idx) = node_wt_map.get(&wt) {
-                        *node_idx
-                    } else {
-                        let node_idx: petgraph::prelude::NodeIndex = graph.add_node(wt.clone());
-                        node_wt_map.insert(wt, node_idx);
-                        node_idx
-                    };
+                    let node_idx = get_or_add_node(wt, &mut graph, &mut node_wt_map);
                     nodes.push((refpos, node_idx));
                     1
                 }
@@ -189,13 +194,26 @@ fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
         // For each overlap, build edge between existing mismatch nodes (^ = itv)
         // | |  | |
         //  ^
+        // let ovl_st = itree_mism
+        //     .find(itv_st.start, itv_st.stop)
+        //     .sorted()
+        //     .collect_vec();
+        // let ovl_end = itree_mism
+        //     .find(itv_end.start, itv_end.stop)
+        //     .sorted()
+        //     .collect_vec();
+
         for (mism_1, mism_2) in itree_mism
             .find(itv_st.start, itv_st.stop)
             .sorted()
             .tuple_windows()
         {
+
+            let node_idx_mism_1 = get_or_add_node(PosNt(mism_1.start, 'N'), &mut graph, &mut node_wt_map);
+            let node_idx_mism_2 = get_or_add_node(PosNt(mism_2.start, 'N'), &mut graph, &mut node_wt_map);
+
             // TODO: Need to create new node as well with altered base
-            graph.add_edge(mism_1.val, mism_2.val, *id);
+            graph.add_edge(node_idx_mism_1, node_idx_mism_2, *id);
         }
         // | |  | |
         //       ^
@@ -204,7 +222,9 @@ fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
             .sorted()
             .tuple_windows()
         {
-            graph.add_edge(mism_1.val, mism_2.val, *id);
+            let node_idx_mism_1 = get_or_add_node(PosNt(mism_1.start, 'N'), &mut graph, &mut node_wt_map);
+            let node_idx_mism_2 = get_or_add_node(PosNt(mism_2.start, 'N'), &mut graph, &mut node_wt_map);
+            graph.add_edge(node_idx_mism_1, node_idx_mism_2, *id);
         }
     }
 
