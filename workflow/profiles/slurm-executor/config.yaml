@@ -12,5 +12,6 @@ max-jobs-per-second: 50
 default-resources:
 - mem=8G
 - runtime=300
-- slurm_partition=elde-np
-- slurm_account=elde-np
+- slurm_account=owner-guest
+- slurm_partition=kingspeak-guest
+- slurm_qos=kingspeak-guest
