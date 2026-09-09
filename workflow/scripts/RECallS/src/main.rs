@@ -3,11 +3,15 @@ use std::{collections::HashMap, ops::Bound};
 use eyre::bail;
 use itertools::Itertools;
 use noodles::{
-    bam,
+    bam::{self, Record},
     core::{Position, Region},
     sam::alignment::record::{Flags, cigar::op::Kind},
 };
-use petgraph::{Graph, dot::Dot, prelude::NodeIndex};
+use petgraph::{
+    Graph,
+    dot::{Config, Dot},
+    prelude::NodeIndex,
+};
 use rust_lapper::{Interval, Lapper};
 
 type ReadBoundItvs = (Interval<usize, NodeIndex>, Interval<usize, NodeIndex>);
@@ -54,18 +58,22 @@ pub(crate) fn get_aligned_pairs(
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 struct PosNt(usize, char);
 
-
-fn get_or_add_node(wt: PosNt, graph: &mut Graph<PosNt, usize>, node_wt_map: &mut HashMap<PosNt, NodeIndex>) -> NodeIndex {
-    if let Some(node_idx) = node_wt_map.get(&wt) {
+fn get_or_add_node(
+    wt: PosNt,
+    graph: &mut Graph<PosNt, usize>,
+    node_wt_map: &mut HashMap<PosNt, (NodeIndex, bool)>,
+    is_mismatch: bool,
+) -> NodeIndex {
+    if let Some((node_idx, _)) = node_wt_map.get(&wt) {
         *node_idx
     } else {
         let node_idx: petgraph::prelude::NodeIndex = graph.add_node(wt.clone());
-        node_wt_map.insert(wt, node_idx);
+        node_wt_map.insert(wt, (node_idx, is_mismatch));
         node_idx
     }
 }
 
-fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
+fn generate_mismatch_dag(aln: &str, region: Region) -> eyre::Result<()> {
     let mut indexed_reader = bam::io::indexed_reader::Builder::default().build_from_path(&aln)?;
     let header = indexed_reader.read_header()?;
     let (Bound::Included(st), Bound::Included(end)) = (
@@ -79,8 +87,8 @@ fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
 
     // Mismatch DAG
     let mut graph: Graph<PosNt, usize> = Graph::new();
-    let mut node_wt_map: HashMap<PosNt, NodeIndex> = HashMap::new();
-    let mut read_ids: HashMap<usize, String> = HashMap::new();
+    let mut node_wt_map: HashMap<PosNt, (NodeIndex, bool)> = HashMap::new();
+    let mut read_recs: HashMap<usize, Record> = HashMap::new();
     // Intervals of read edges in refpos
     let mut read_edge_bound_itvs: HashMap<usize, ReadBoundItvs> = HashMap::new();
 
@@ -95,11 +103,6 @@ fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
         .enumerate()
     {
         let cg: bam::record::Cigar<'_> = rec.cigar();
-        let rname = rec
-            .name()
-            .map(|rname| str::from_utf8(rname))
-            .transpose()?
-            .unwrap();
         let aln_pairs = get_aligned_pairs(
             cg.iter().flatten().map(|op| (op.kind(), op.len())),
             rec.alignment_start().unwrap()?.get(),
@@ -127,7 +130,7 @@ fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
                 Kind::SequenceMismatch => {
                     // Add node for refpos and the nt.
                     let wt = PosNt(refpos, nt);
-                    let node_idx = get_or_add_node(wt, &mut graph, &mut node_wt_map);
+                    let node_idx = get_or_add_node(wt, &mut graph, &mut node_wt_map, true);
                     nodes.push((refpos, node_idx));
                     1
                 }
@@ -142,7 +145,6 @@ fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
         // Need to pick up CO events
         // | *   * |
         //  ^     ^
-        // TODO: This probably needs to store the cigar to pick up the changed base, if any.
         let (
             Some((first_mismatch_refpos, first_mismatch_node_idx)),
             Some((last_mismatch_refpos, last_mismatch_node_idx)),
@@ -173,7 +175,7 @@ fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
             (a.1, b.1, i)
         }));
 
-        read_ids.insert(i, rname.to_owned());
+        read_recs.insert(i, rec);
     }
 
     // Construct intervaltree of mismatched regions
@@ -188,31 +190,36 @@ fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
             .collect(),
     );
 
+    // TODO: Node 6339682 is incorrect.
     // Then fill in the gaps in reads at the end
-    for (id, _read_name) in read_ids.iter() {
+    for (id, rec) in read_recs.iter() {
         let (itv_st, itv_end) = &read_edge_bound_itvs[id];
+        let seq = rec.sequence();
         // For each overlap, build edge between existing mismatch nodes (^ = itv)
         // | |  | |
         //  ^
-        // let ovl_st = itree_mism
-        //     .find(itv_st.start, itv_st.stop)
-        //     .sorted()
-        //     .collect_vec();
-        // let ovl_end = itree_mism
-        //     .find(itv_end.start, itv_end.stop)
-        //     .sorted()
-        //     .collect_vec();
-
         for (mism_1, mism_2) in itree_mism
             .find(itv_st.start, itv_st.stop)
             .sorted()
             .tuple_windows()
         {
+            let pos_1 = mism_1.start - st;
+            let pos_2 = mism_2.start - st;
+            let nt_1 = seq.get(pos_1).map(char::from).unwrap();
+            let nt_2 = seq.get(pos_2).map(char::from).unwrap();
+            let node_idx_mism_1 = get_or_add_node(
+                PosNt(mism_1.start, nt_1),
+                &mut graph,
+                &mut node_wt_map,
+                false,
+            );
+            let node_idx_mism_2 = get_or_add_node(
+                PosNt(mism_2.start, nt_2),
+                &mut graph,
+                &mut node_wt_map,
+                false,
+            );
 
-            let node_idx_mism_1 = get_or_add_node(PosNt(mism_1.start, 'N'), &mut graph, &mut node_wt_map);
-            let node_idx_mism_2 = get_or_add_node(PosNt(mism_2.start, 'N'), &mut graph, &mut node_wt_map);
-
-            // TODO: Need to create new node as well with altered base
             graph.add_edge(node_idx_mism_1, node_idx_mism_2, *id);
         }
         // | |  | |
@@ -222,19 +229,54 @@ fn pileup(aln: &str, region: Region) -> eyre::Result<()> {
             .sorted()
             .tuple_windows()
         {
-            let node_idx_mism_1 = get_or_add_node(PosNt(mism_1.start, 'N'), &mut graph, &mut node_wt_map);
-            let node_idx_mism_2 = get_or_add_node(PosNt(mism_2.start, 'N'), &mut graph, &mut node_wt_map);
+            let pos_1 = mism_1.start - st;
+            let pos_2 = mism_2.start - st;
+            let nt_1 = seq.get(pos_1).map(char::from).unwrap();
+            let nt_2 = seq.get(pos_2).map(char::from).unwrap();
+            let node_idx_mism_1 = get_or_add_node(
+                PosNt(mism_1.start, nt_1),
+                &mut graph,
+                &mut node_wt_map,
+                false,
+            );
+            let node_idx_mism_2 = get_or_add_node(
+                PosNt(mism_2.start, nt_2),
+                &mut graph,
+                &mut node_wt_map,
+                false,
+            );
             graph.add_edge(node_idx_mism_1, node_idx_mism_2, *id);
         }
     }
 
-    // https://wintertee.github.io/Graphviz-Visualizer/
-    println!("{:?}", Dot::new(&graph));
     // Calculate MAPQ based on coverage
     for (ipos, mq) in mapq.iter_mut().enumerate() {
         let ncov = cov[ipos];
         *mq /= ncov
     }
+
+    // TODO: Find paths
+
+    // https://wintertee.github.io/Graphviz-Visualizer/
+    let f_get_node_attr = |_g, (_node_idx, node_val)| {
+        let (_, is_mismatch) = &node_wt_map[node_val];
+        let color = if *is_mismatch { "red" } else { "white" };
+        format!(
+            r#"label = "{} ({})", style="filled", fillcolor="{}""#,
+            node_val.1, node_val.0, color
+        )
+    };
+    let dot_graph = Dot::with_attr_getters(
+        &graph,
+        // Omit builtin edge and node labels
+        &[Config::EdgeNoLabel, Config::NodeNoLabel],
+        // TODO: read as label
+        // TODO: color best paths
+        &|_g, edge_ref| format!(r#"label = "{}""#, edge_ref.weight()),
+        // Color by mismatch
+        &f_get_node_attr,
+    );
+    println!("{dot_graph:?}");
 
     Ok(())
 }
@@ -248,6 +290,6 @@ fn main() -> eyre::Result<()> {
         "ENA_CBCUDK010000011_CBCUDK010000011.1",
         Position::new(6334613).unwrap()..=Position::new(6342169).unwrap(),
     );
-    pileup(bam, region)?;
+    generate_mismatch_dag(bam, region)?;
     Ok(())
 }
