@@ -40,6 +40,15 @@ align:
   # Don't delete merged assembly.
   temp_asm: False
 
+call_variants:
+  output_dir: "results/call_variants"
+  logs_dir: "logs/call_variants"
+  benchmarks_dir: "benchmarks/call_variants"
+  threads_sniffles: 8
+  mem_sniffles: 40G
+  threads_hiphase: 8
+  mem_hiphase: 40G
+
 # Annotate repeats (RepeatMasker) and SDs (biser)
 annot:
   output_dir: "results/annot"
@@ -52,4 +61,16 @@ annot:
   species_rm: primates
   # biser settings
   threads_biser: 4
-  mem_biser: 40G
+  mem_biser: 100G
+
+liftover:
+  output_dir: "results/liftover"
+  logs_dir: "logs/liftover"
+  benchmarks_dir: "benchmarks/liftover"
+  threads_aln: 8
+  mem_aln: 50G
+  reference: data/PrimateTestisData/asm/mPanTro3.analysis-dip.20231122.fasta.gz
+  annot:
+    genes: data/PrimateTestisData/annot/mPanTro3_refGene.bb
+    sd: data/PrimateTestisData/annot/mPanTro3_v2.0.SD_v1.0.bb
+  mm2_opts: "-x asm5 --secondary=no -s 25000 -K 8G"
