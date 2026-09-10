@@ -3,13 +3,45 @@ CALL_VAR_LOGDIR = config["call_variants"]["logs_dir"]
 CALL_VAR_BMKDIR = config["call_variants"]["benchmarks_dir"]
 
 
-# Sniffles mosaic
-rule call_variants:
+rule run_deepvariant:
     input:
         bam=rules.self_aln_merge_read_asm_alignments.output.alignment,
         ref=rules.self_aln_merge_asm_files.output.asm,
     output:
-        vcf=join(CALL_VAR_OUTDIR, "{sm}.vcf"),
+        vcf=join(CALL_VAR_OUTDIR, "{sm}_deepvariant.gvcf.gz"),
+        # https://gatk.broadinstitute.org/hc/en-us/articles/360035531812-GVCF-Genomic-Variant-Call-Format
+        gvcf=join(CALL_VAR_OUTDIR, "{sm}_deepvariant.vcf.gz"),
+    log:
+        join(CALL_VAR_LOGDIR, "run_deepvariant_{sm}.log"),
+    benchmark:
+        join(CALL_VAR_BMKDIR, "run_deepvariant_{sm}.tsv")
+    singularity:
+        "docker://google/deepvariant:1.9.0"
+    params:
+        model="PACBIO",
+    shell:
+        """
+        /opt/deepvariant/bin/run_deepvariant \
+            --model_type {params.model} \
+            --ref {input.ref} \
+            --reads {input.bam} \
+            --output_vcf {output.vcf} \
+            --output_gvcf {output.gvcf} \
+            --num_shards {threads} &>{log}
+        """
+
+
+# Sniffles mosaic
+rule run_sniffles:
+    input:
+        bam=rules.self_aln_merge_read_asm_alignments.output.alignment,
+        ref=rules.self_aln_merge_asm_files.output.asm,
+    output:
+        vcf=join(CALL_VAR_OUTDIR, "{sm}_sniffles.vcf.gz"),
+    log:
+        join(CALL_VAR_LOGDIR, "run_sniffles_{sm}.log"),
+    benchmark:
+        join(CALL_VAR_BMKDIR, "run_sniffles_{sm}.tsv")
     conda:
         "../envs/env.yaml"
     threads: config["call_variants"]["threads_sniffles"]
@@ -23,7 +55,7 @@ rule call_variants:
             --vcf {output.vcf} \
             --mosaic \
             --threads {threads} \
-            --output-rnames
+            --output-rnames &>{log}
         """
 
 
@@ -31,11 +63,17 @@ rule call_variants:
 rule phase_variants_bam:
     input:
         bam=rules.self_aln_merge_read_asm_alignments.output.alignment,
-        vcf=rules.call_variants.output.vcf,
+        deepvariant_vcf=rules.run_deepvariant.output.vcf,
+        sniffles_vcf=rules.run_sniffles.output.vcf,
         ref=rules.self_aln_merge_asm_files.output.asm,
     output:
-        hvcf=join(CALL_VAR_OUTDIR, "{sm}.phased.vcf"),
+        deepvariant_hvcf=join(CALL_VAR_OUTDIR, "{sm}_deepvariant.phased.vcf.gz"),
+        sniffles_hvcf=join(CALL_VAR_OUTDIR, "{sm}_sniffles.phased.vcf.gz"),
         hbam=join(CALL_VAR_OUTDIR, "{sm}.phased.bam"),
+    log:
+        join(CALL_VAR_LOGDIR, "hiphase_{sm}.log"),
+    benchmark:
+        join(CALL_VAR_BMKDIR, "hiphase_{sm}.tsv")
     conda:
         "../envs/env.yaml"
     threads: config["call_variants"]["threads_hiphase"]
@@ -45,15 +83,19 @@ rule phase_variants_bam:
         """
         hiphase \
             --bam {input.bam} \
-            --vcf {input.vcf} \
-            --output-vcf {output.hvcf} \
+            --vcf {input.deepvariant_vcf} \
+            --output-vcf {output.deepvariant_hvcf} \
+            --vcf {input.sniffles_vcf} \
+            --output-vcf {output.sniffles_hvcf} \
             --output-bam {output.hbam} \
             --reference {input.ref} \
-            --threads {threads}
+            --threads {threads} \
+            --ignore-read-groups &>{log}
         """
 
 
 rule call_vars_all:
     input:
-        expand(rules.call_variants.output, sm=SAMPLE_NAMES),
+        expand(rules.run_sniffles.output, sm=SAMPLE_NAMES),
+        expand(rules.run_deepvariant.output, sm=SAMPLE_NAMES),
         expand(rules.phase_variants_bam.output, sm=SAMPLE_NAMES),

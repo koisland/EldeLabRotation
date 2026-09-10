@@ -15,3 +15,4 @@ default-resources:
 - slurm_account=owner-guest
 - slurm_partition=kingspeak-guest
 - slurm_qos=kingspeak-guest
+singularity-args: "-B /scratch,/usr/lib/locale/:/usr/lib/locale/"

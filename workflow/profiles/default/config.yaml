@@ -7,3 +7,4 @@ software-deployment-method:
 show-failed-logs: True
 cores: 32
 local-cores: 4
+singularity-args: "-B /scratch,/usr/lib/locale/:/usr/lib/locale/"
