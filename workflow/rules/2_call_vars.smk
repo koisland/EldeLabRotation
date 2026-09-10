@@ -17,6 +17,9 @@ rule run_deepvariant:
         join(CALL_VAR_BMKDIR, "run_deepvariant_{sm}.tsv")
     singularity:
         "docker://google/deepvariant:1.9.0"
+    threads: config["call_variants"]["threads_deepvariant"]
+    resources:
+        mem=config["call_variants"]["mem_deepvariant"],
     params:
         model="PACBIO",
     shell:

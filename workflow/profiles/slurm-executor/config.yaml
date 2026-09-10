@@ -16,4 +16,6 @@ default-resources:
 - slurm_account=owner-guest
 - slurm_partition=kingspeak-guest
 - slurm_qos=kingspeak-guest
+# - slurm_account=elde-np
+# - slurm_partition=elde-np
 singularity-args: "-B /scratch,/usr/lib/locale/:/usr/lib/locale/"

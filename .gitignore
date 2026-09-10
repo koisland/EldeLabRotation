@@ -9,3 +9,7 @@ results
 benchmarks
 .snakemake
 RM_*
+
+# deepvariant
+.keras
+.parallel

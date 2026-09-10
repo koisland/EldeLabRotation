@@ -10,5 +10,5 @@ rule all:
     input:
         rules.read_align_all.input,
         rules.annote_ampl_all.input,
-        # rules.call_vars_all.input,
+        rules.call_vars_all.input,
         rules.liftover_all.input,
