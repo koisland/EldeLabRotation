@@ -8,8 +8,9 @@ git clone https://github.com/koisland/sperm_ampl_sv --recursive
 cd sperm_ampl_sv
 ```
 
-Use `pixi` to setup dependencies.
+Use `pixi` to setup dependencies. Also load `apptainer`.
 ```bash
+module load apptainer
 pixi install
 ```
 

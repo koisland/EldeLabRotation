@@ -60,8 +60,8 @@ annot:
   engine_rm: rmblast
   species_rm: primates
   # biser settings
-  threads_biser: 4
-  mem_biser: 100G
+  threads_biser: 8
+  mem_biser: 200G
 
 liftover:
   output_dir: "results/liftover"
@@ -69,7 +69,9 @@ liftover:
   benchmarks_dir: "benchmarks/liftover"
   threads_aln: 8
   mem_aln: 50G
-  reference: data/PrimateTestisData/asm/mPanTro3.analysis-dip.20231122.fasta.gz
+  reference: 
+    path: data/PrimateTestisData/asm/mPanTro3.analysis-dip.20231122.fasta.gz
+    name: mPanTro3
   annot:
     genes: data/PrimateTestisData/annot/mPanTro3_refGene.bb
     sd: data/PrimateTestisData/annot/mPanTro3_v2.0.SD_v1.0.bb
