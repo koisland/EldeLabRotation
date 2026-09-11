@@ -52,18 +52,18 @@ rule generate_chain_file:
         "../envs/env.yaml"
     shell:
         """
-        paf2chain -i {input} >{output} &>{log}
+        paf2chain -i {input} >{output} 2>{log}
         """
 
 
 rule liftover_annotations:
     input:
-        # bigbed file
+        # bed or gff file
         annot=lambda wc: ANNOTS[wc.annot],
         chain=rules.generate_chain_file.output,
     output:
-        bed=join(LIFTOVER_OUTDIR, REF, "annot", "{sm}_{annot}.bed.gz"),
-        unmapped_bed=join(LIFTOVER_OUTDIR, REF, "annot", "{sm}_{annot}_unmapped.bed.gz"),
+        bed=join(LIFTOVER_OUTDIR, REF, "annot", "{sm}_{annot}.out.gz"),
+        unmapped_bed=join(LIFTOVER_OUTDIR, REF, "annot", "{sm}_{annot}_unmapped.out.gz"),
     log:
         join(LIFTOVER_LOGDIR, f"liftover_{REF}_{{sm}}_{{annot}}.log"),
     benchmark:
@@ -74,19 +74,21 @@ rule liftover_annotations:
         allow_multiple=(
             "-multiple" if config["liftover"].get("allow_multiple", False) else ""
         ),
+        is_gff=lambda wc, input: "-gff" if str(input.annot).endswith(".gff") else "",
         ungzipped_bed=lambda wc, output: output.bed.replace(".gz", ""),
         ungzipped_unmapped_bed=lambda wc, output: output.unmapped_bed.replace(".gz", ""),
+        tabix_fmt="gff" if str(input.annot).endswith(".gff") else "bed",
     shell:
         """
-        liftOver {params.allow_multiple} \
+        liftOver {params.allow_multiple} {params.is_gff} \
             {input.annot} \
             {input.chain} \
             {params.ungzipped_bed} \
             {params.ungzipped_unmapped_bed} &>{log}
         sort -k1,1 -k2,2n {params.ungzipped_bed} | bgzip >{output.bed}
         sort -k1,1 -k2,2n {params.ungzipped_unmapped_bed} | bgzip >{output.unmapped_bed}
-        tabix -p bed {output.bed}
-        tabix -p bed {output.unmapped_bed}
+        tabix -p {params.tabix_fmt} {output.bed}
+        tabix -p {params.tabix_fmt} {output.unmapped_bed}
         """
 
 

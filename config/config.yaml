@@ -75,6 +75,6 @@ liftover:
     path: data/PrimateTestisData/asm/mPanTro3.analysis-dip.20231122.fasta.gz
     name: mPanTro3
   annot:
-    genes: data/PrimateTestisData/annot/mPanTro3_refGene.bb
+    genes: data/PrimateTestisData/annot/mPanTro3_refGene_simple.bed
     # sd: data/PrimateTestisData/annot/mPanTro3_v2.0.SD_v1.0.bb
   mm2_opts: "-x asm20 --secondary=no -s 25000 -K 8G"
