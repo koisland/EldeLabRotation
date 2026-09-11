@@ -44,8 +44,8 @@ call_variants:
   output_dir: "results/call_variants"
   logs_dir: "logs/call_variants"
   benchmarks_dir: "benchmarks/call_variants"
-  threads_deepvariant: 8
-  mem_deepvariant: 70G
+  threads_deepvariant: 32
+  mem_deepvariant: 100G
   threads_sniffles: 8
   mem_sniffles: 40G
   threads_hiphase: 8
@@ -62,19 +62,19 @@ annot:
   engine_rm: rmblast
   species_rm: primates
   # biser settings
-  threads_biser: 8
-  mem_biser: 120G
+  threads_biser: 4
+  mem_biser: 200G
 
 liftover:
   output_dir: "results/liftover"
   logs_dir: "logs/liftover"
   benchmarks_dir: "benchmarks/liftover"
   threads_aln: 8
-  mem_aln: 80G
+  mem_aln: 120G
   reference: 
     path: data/PrimateTestisData/asm/mPanTro3.analysis-dip.20231122.fasta.gz
     name: mPanTro3
   annot:
     genes: data/PrimateTestisData/annot/mPanTro3_refGene.bb
-    sd: data/PrimateTestisData/annot/mPanTro3_v2.0.SD_v1.0.bb
+    # sd: data/PrimateTestisData/annot/mPanTro3_v2.0.SD_v1.0.bb
   mm2_opts: "-x asm20 --secondary=no -s 25000 -K 8G"
