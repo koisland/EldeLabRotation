@@ -63,7 +63,7 @@ annot:
   species_rm: primates
   # biser settings
   threads_biser: 4
-  mem_biser: 200G
+  mem_biser: 300G
 
 liftover:
   output_dir: "results/liftover"

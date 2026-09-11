@@ -12,7 +12,7 @@ latency-wait: 60
 max-jobs-per-second: 50
 default-resources:
 - mem=8G
-- runtime=360
+- runtime=480
 - slurm_account=owner-guest
 - slurm_partition=kingspeak-guest
 - slurm_qos=kingspeak-guest
