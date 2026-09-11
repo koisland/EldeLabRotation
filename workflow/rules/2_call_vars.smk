@@ -1,6 +1,6 @@
-CALL_VAR_OUTDIR = config["call_variants"]["output_dir"]
-CALL_VAR_LOGDIR = config["call_variants"]["logs_dir"]
-CALL_VAR_BMKDIR = config["call_variants"]["benchmarks_dir"]
+CALL_VAR_OUTDIR = join(config["output_dir"], "call_variants")
+CALL_VAR_LOGDIR = join(config["logs_dir"], "call_variants")
+CALL_VAR_BMKDIR = join(config["benchmarks_dir"], "call_variants")
 
 
 rule run_deepvariant:

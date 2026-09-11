@@ -1,31 +1,17 @@
 samples:
-  # - name: CT15
-  #   asm_fa: data/PrimateTestisData/asm/GCA_965153145.1.fa.gz
-  #   reads: [
-  #     data/PrimateTestisData/reads/ERR14376286.bam
-  #   ]
   - name: CT22
     asm_fa: data/PrimateTestisData/asm/GCA_965153165.1.fa.gz
     reads: [
       data/PrimateTestisData/reads/ERR14376368.bam
     ]
-  # - name: CT28
-  #   asm_fa: data/PrimateTestisData/asm/GCA_965153115.1.fa.gz
-  #   reads: [
-  #     data/PrimateTestisData/reads/ERR14376446.bam
-  #   ]
-  # - name: CT32
-  #   asm_fa: data/PrimateTestisData/asm/GCA_965153035.1.fa.gz
-  #   reads: [
-  #     data/PrimateTestisData/reads/ERR14368733.bam
-  #   ]
+
+output_dir: "results"
+logs_dir: "logs"
+benchmarks_dir: "benchmarks"
 
 # Align reads to DSA
 align:
   # See https://github.com/logsdon-lab/Snakemake-Aligner
-  output_dir: "results/align"
-  logs_dir: "logs/align"
-  benchmarks_dir: "benchmarks/align"
   threads_aln: 8
   mem_aln: 80G
   aligner: "minimap2"
@@ -41,9 +27,6 @@ align:
   temp_asm: False
 
 call_variants:
-  output_dir: "results/call_variants"
-  logs_dir: "logs/call_variants"
-  benchmarks_dir: "benchmarks/call_variants"
   threads_deepvariant: 32
   mem_deepvariant: 100G
   threads_sniffles: 8
@@ -51,30 +34,24 @@ call_variants:
   threads_hiphase: 8
   mem_hiphase: 40G
 
-# Annotate repeats (RepeatMasker) and SDs (biser)
-annot:
-  output_dir: "results/annot"
-  logs_dir: "logs/annot"
-  benchmarks_dir: "benchmarks/annot"
-  threads_rm: 2
-  mem_rm: 8G
-  # RepeatMasker species
-  engine_rm: rmblast
-  species_rm: primates
-  # biser settings
-  threads_biser: 4
-  mem_biser: 300G
+# # Annotate repeats (RepeatMasker) and SDs (biser)
+# annot:
+#   threads_rm: 2
+#   mem_rm: 8G
+#   # RepeatMasker species
+#   engine_rm: rmblast
+#   species_rm: primates
+#   # biser settings
+#   threads_biser: 4
+#   mem_biser: 300G
 
 liftover:
-  output_dir: "results/liftover"
-  logs_dir: "logs/liftover"
-  benchmarks_dir: "benchmarks/liftover"
   threads_aln: 8
   mem_aln: 120G
   reference: 
     path: data/PrimateTestisData/asm/mPanTro3.analysis-dip.20231122.fasta.gz
     name: mPanTro3
   annot:
-    genes: data/PrimateTestisData/annot/mPanTro3_refGene_simple.bed
-    # sd: data/PrimateTestisData/annot/mPanTro3_v2.0.SD_v1.0.bb
+    genes: /scratch/ucgd/lustre-labs/vollger/users/Keith/EldeLabRotation/data/annot/human/chm13v2.0_RefSeq_Liftoff_v5.3.gff
+    sd: /scratch/ucgd/lustre-labs/vollger/users/Keith/EldeLabRotation/data/annot/human/segDups_2024.bed
   mm2_opts: "-x asm20 --secondary=no -s 25000 -K 8G"

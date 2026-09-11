@@ -1,7 +1,8 @@
-ANNOT_OUTDIR = config["annot"]["output_dir"]
-SPLIT_MULTIFA_DIR = join(config["annot"]["output_dir"], "fa")
-ANNOT_LOGDIR = config["annot"]["logs_dir"]
-ANNOT_BMKDIR = config["annot"]["benchmarks_dir"]
+ANNOT_OUTDIR = join(config["output_dir"], "annot")
+SPLIT_MULTIFA_DIR = join(ANNOT_OUTDIR, "fa")
+ANNOT_LOGDIR = join(config["logs_dir"], "annot")
+ANNOT_BMKDIR = join(config["benchmarks_dir"], "annot")
+
 
 ANNOT_CFG = {
     "samples": {
@@ -23,6 +24,9 @@ ANNOT_CFG = {
 }
 
 
+# TODO: TRF + windowmasker to better mask reference. Look at Eichler Lab GH
+# https://github.com/EichlerLab/sedef_smk/tree/main/rules
+# https://genome.ucsc.edu/cgi-bin/hgTrackUi?hgsid=4161691683_uqKBa5fu135H1RWEk6zfhhtEF4WH&db=hub_4837794_T2T-CHM13v2.0&c=chr7&g=hub_4837794_segDups2024
 module AnnotateRepeats:
     snakefile:
         "Snakemake-Repeat-Annotation/workflow/Snakefile"

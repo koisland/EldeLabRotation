@@ -2,9 +2,9 @@ REF = config["liftover"]["reference"]["name"]
 ANNOTS: dict[str, str] = config["liftover"]["annot"]
 MM2_OPTS = config["liftover"]["mm2_opts"]
 
-LIFTOVER_OUTDIR = config["liftover"]["output_dir"]
-LIFTOVER_LOGDIR = config["liftover"]["logs_dir"]
-LIFTOVER_BMKDIR = config["liftover"]["benchmarks_dir"]
+LIFTOVER_OUTDIR = join(config["output_dir"], "liftover")
+LIFTOVER_LOGDIR = join(config["logs_dir"], "liftover")
+LIFTOVER_BMKDIR = join(config["benchmarks_dir"], "liftover")
 
 ALN_CFG = {
     "ref": {REF: config["liftover"]["reference"]["path"]},
