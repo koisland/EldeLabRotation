@@ -69,6 +69,9 @@ rule liftover_genes:
         join(LIFTOVER_BMKDIR, f"lifton_{REF}_{{sm}}_{{annot}}.tsv")
     conda:
         "../envs/env.yaml"
+    threads: config["liftover"]["threads_aln"]
+    resources:
+        mem=config["liftover"]["mem_aln"],
     params:
         # https://khchao.com/LiftOn/content/function_manual.html
         min_seq_ident=0.95,
@@ -77,10 +80,11 @@ rule liftover_genes:
         """
         lifton {params.liftover_args} -g {input.gff} \
             -o {output.gff} \
+            --threads {threads} \
             -copies \
             -sc {params.min_seq_ident} \
             {input.target} \
-            {input.reference} &> {log}
+            {input.reference} &>{log}
         """
 
 

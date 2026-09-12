@@ -40,7 +40,7 @@ rule run_pbsv:
         ref=rules.self_aln_merge_asm_files.output.asm,
     output:
         sig=join(CALL_VAR_OUTDIR, "{sm}_pbsv.svsig.gz"),
-        vcf=join(CALL_VAR_OUTDIR, "{sm}_pbsv.vcf.gz"),
+        vcf=join(CALL_VAR_OUTDIR, "{sm}_pbsv.vcf"),
     log:
         join(CALL_VAR_LOGDIR, "run_pbsv_{sm}.log"),
     benchmark:
@@ -53,7 +53,7 @@ rule run_pbsv:
     shell:
         """
         pbsv discover {input.bam} {output.sig} &>{log}
-        pbsv call {input.ref} {output.sig} {output.vcf} &>>{log}
+        pbsv call -j {threads} {input.ref} {output.sig} {output.vcf} &>>{log}
         """
 
 
