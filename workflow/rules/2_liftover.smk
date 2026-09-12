@@ -1,5 +1,5 @@
 REF = config["liftover"]["reference"]["name"]
-ANNOTS: dict[str, str] = config["liftover"]["annot"]
+ANNOTS: dict[str, dict[str, str]] = config["liftover"]["annot"]
 MM2_OPTS = config["liftover"]["mm2_opts"]
 
 LIFTOVER_OUTDIR = join(config["output_dir"], "liftover")
@@ -58,35 +58,36 @@ rule generate_chain_file:
 
 rule liftover_genes:
     input:
-        gff=lambda wc: ANNOTS[wc.annot],
+        gff=lambda wc: ANNOTS[wc.annot]["path"],
         target=rules.self_aln_merge_asm_files.output.asm,
         reference=config["liftover"]["reference"]["path"],
     output:
         gff=join(LIFTOVER_OUTDIR, REF, "genes", "{sm}_{annot}.gff"),
-    params:
-        # https://khchao.com/LiftOn/content/function_manual.html
-        min_seq_ident=0.95,
     log:
         join(LIFTOVER_LOGDIR, f"lifton_{REF}_{{sm}}_{{annot}}.log"),
     benchmark:
         join(LIFTOVER_BMKDIR, f"lifton_{REF}_{{sm}}_{{annot}}.tsv")
     conda:
         "../envs/env.yaml"
+    params:
+        # https://khchao.com/LiftOn/content/function_manual.html
+        min_seq_ident=0.95,
+        liftover_args=lambda wc: ANNOTS[wc.annot].get("liftover_args", ""),
     shell:
         """
-        lifton -g {input.gff} \
-        -o {output.gff} \
-        -copies \
-        -sc {params.min_seq_ident} \
-        {input.target} \
-        {input.reference}
+        lifton {params.liftover_args} -g {input.gff} \
+            -o {output.gff} \
+            -copies \
+            -sc {params.min_seq_ident} \
+            {input.target} \
+            {input.reference} &> {log}
         """
 
 
 rule liftover_annotations:
     input:
         # bed or gff file
-        annot=lambda wc: ANNOTS[wc.annot],
+        annot=lambda wc: ANNOTS[wc.annot]["path"],
         chain=rules.generate_chain_file.output,
     output:
         bed=join(LIFTOVER_OUTDIR, REF, "annot", "{sm}_{annot}.bed.gz"),
@@ -98,14 +99,12 @@ rule liftover_annotations:
     conda:
         "../envs/env.yaml"
     params:
-        allow_multiple=(
-            "-multiple" if config["liftover"].get("allow_multiple", False) else ""
-        ),
+        liftover_args=lambda wc: ANNOTS[wc.annot].get("liftover_args", ""),
         ungzipped_bed=lambda wc, output: output.bed.replace(".gz", ""),
         ungzipped_unmapped_bed=lambda wc, output: output.unmapped_bed.replace(".gz", ""),
     shell:
         """
-        liftOver {params.allow_multiple} \
+        liftOver {params.liftover_args} \
             {input.annot} \
             {input.chain} \
             {params.ungzipped_bed} \
@@ -119,7 +118,7 @@ rule liftover_annotations:
 
 
 def liftover_output(sm: str, annot: str):
-    infile = ANNOTS[annot]
+    infile = ANNOTS[annot]["path"]
     if infile.endswith(".gff") or infile.endswith(".gff.gz"):
         return expand(rules.liftover_genes.output, sm=sm, annot=annot)
     elif infile.endswith(".bed"):
@@ -131,8 +130,4 @@ def liftover_output(sm: str, annot: str):
 rule liftover_all:
     input:
         rules.align_asm_ref_all.input,
-        [
-            liftover_output(sm, annot)
-            for sm in SAMPLE_NAMES
-            for annot in ANNOTS.keys()
-        ],
+        [liftover_output(sm, annot) for sm in SAMPLE_NAMES for annot in ANNOTS.keys()],

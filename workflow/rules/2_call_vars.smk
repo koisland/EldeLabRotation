@@ -34,32 +34,26 @@ rule run_deepvariant:
         """
 
 
-# Sniffles mosaic
-rule run_sniffles:
+rule run_pbsv:
     input:
         bam=rules.self_aln_merge_read_asm_alignments.output.alignment,
         ref=rules.self_aln_merge_asm_files.output.asm,
     output:
-        vcf=join(CALL_VAR_OUTDIR, "{sm}_sniffles.vcf.gz"),
+        sig=join(CALL_VAR_OUTDIR, "{sm}_pbsv.svsig.gz"),
+        vcf=join(CALL_VAR_OUTDIR, "{sm}_pbsv.vcf.gz"),
     log:
-        join(CALL_VAR_LOGDIR, "run_sniffles_{sm}.log"),
+        join(CALL_VAR_LOGDIR, "run_pbsv_{sm}.log"),
     benchmark:
-        join(CALL_VAR_BMKDIR, "run_sniffles_{sm}.tsv")
+        join(CALL_VAR_BMKDIR, "run_pbsv_{sm}.tsv")
     conda:
         "../envs/env.yaml"
-    threads: config["call_variants"]["threads_sniffles"]
+    threads: config["call_variants"]["threads_pbsv"]
     resources:
-        mem=config["call_variants"]["mem_sniffles"],
+        mem=config["call_variants"]["mem_pbsv"],
     shell:
         """
-        sniffles \
-            --input {input.bam} \
-            --reference {input.ref} \
-            --vcf {output.vcf} \
-            --mosaic \
-            --sample-id {wildcards.sm} \
-            --threads {threads} \
-            --output-rnames &>{log}
+        pbsv discover {input.bam} {output.sig} &>{log}
+        pbsv call {input.ref} {output.sig} {output.vcf} &>>{log}
         """
 
 
@@ -68,11 +62,11 @@ rule phase_variants_bam:
     input:
         bam=rules.self_aln_merge_read_asm_alignments.output.alignment,
         deepvariant_vcf=rules.run_deepvariant.output.vcf,
-        sniffles_vcf=rules.run_sniffles.output.vcf,
+        pbsv_vcf=rules.run_pbsv.output.vcf,
         ref=rules.self_aln_merge_asm_files.output.asm,
     output:
         deepvariant_hvcf=join(CALL_VAR_OUTDIR, "{sm}_deepvariant.phased.vcf.gz"),
-        sniffles_hvcf=join(CALL_VAR_OUTDIR, "{sm}_sniffles.phased.vcf.gz"),
+        pbsv_hvcf=join(CALL_VAR_OUTDIR, "{sm}_pbsv.phased.vcf.gz"),
         hbam=join(CALL_VAR_OUTDIR, "{sm}.phased.bam"),
     log:
         join(CALL_VAR_LOGDIR, "hiphase_{sm}.log"),
@@ -89,8 +83,8 @@ rule phase_variants_bam:
             --bam {input.bam} \
             --vcf {input.deepvariant_vcf} \
             --output-vcf {output.deepvariant_hvcf} \
-            --vcf {input.sniffles_vcf} \
-            --output-vcf {output.sniffles_hvcf} \
+            --vcf {input.pbsv_vcf} \
+            --output-vcf {output.pbsv_hvcf} \
             --output-bam {output.hbam} \
             --reference {input.ref} \
             --threads {threads} \
@@ -100,6 +94,6 @@ rule phase_variants_bam:
 
 rule call_vars_all:
     input:
-        expand(rules.run_sniffles.output, sm=SAMPLE_NAMES),
+        expand(rules.run_pbsv.output, sm=SAMPLE_NAMES),
         expand(rules.run_deepvariant.output, sm=SAMPLE_NAMES),
         expand(rules.phase_variants_bam.output, sm=SAMPLE_NAMES),

@@ -33,7 +33,7 @@ else:
             "../envs/env.yaml"
         shell:
             """
-            zcat -f {input.asm} > {output.asm}
+            zcat -f {input.asm} >{output.asm}
             samtools faidx {output.asm}
             """
 

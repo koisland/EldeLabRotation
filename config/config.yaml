@@ -29,8 +29,8 @@ align:
 call_variants:
   threads_deepvariant: 32
   mem_deepvariant: 100G
-  threads_sniffles: 8
-  mem_sniffles: 40G
+  threads_pbsv: 8
+  mem_pbsv: 40G
   threads_hiphase: 8
   mem_hiphase: 40G
 
@@ -46,12 +46,24 @@ call_variants:
 #   mem_biser: 300G
 
 liftover:
+  # Used for liftover bed and SafFire
+  # Different params used for lifton and genes
   threads_aln: 8
   mem_aln: 120G
+  # Minimap2 params
+  # * -x asm20 for more divergent species
+  # * --secondary=no for no secondary alignments
+  # * -s for minimum alignment score
+  # * -K for diploid assembly index size
+  mm2_opts: "-x asm20 --secondary=no -s 25000 -K 8G"
   reference: 
     path: data/PrimateTestisData/asm/mPanTro3.analysis-dip.20231122.fasta.gz
     name: mPanTro3
+  # Different annnotation types (bed or gff)
+  # If gff, uses lifton
   annot:
-    genes: /scratch/ucgd/lustre-labs/vollger/users/Keith/EldeLabRotation/data/annot/human/chm13v2.0_RefSeq_Liftoff_v5.3.gff
-    sd: /scratch/ucgd/lustre-labs/vollger/users/Keith/EldeLabRotation/data/annot/human/segDups_2024.bed
-  mm2_opts: "-x asm20 --secondary=no -s 25000 -K 8G"
+    genes:
+      path: /scratch/ucgd/lustre-labs/vollger/users/Keith/EldeLabRotation/data/annot/human/chm13v2.0_RefSeq_Liftoff_v5.3.gff
+    sd:
+      path: /scratch/ucgd/lustre-labs/vollger/users/Keith/EldeLabRotation/data/annot/human/segDups_2024.bed
+      liftover_args: -bedPlus=9 # -multiple
