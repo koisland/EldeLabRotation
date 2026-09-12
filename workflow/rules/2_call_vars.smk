@@ -57,6 +57,7 @@ rule run_sniffles:
             --reference {input.ref} \
             --vcf {output.vcf} \
             --mosaic \
+            --sample-id {wildcards.sm} \
             --threads {threads} \
             --output-rnames &>{log}
         """

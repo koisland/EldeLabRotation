@@ -14,8 +14,11 @@ default-resources:
 - mem=8G
 - runtime=480
 - slurm_account=owner-guest
-- slurm_partition=kingspeak-guest
-- slurm_qos=kingspeak-guest
+- slurm_partition=redwood-guest
+- slurm_qos=redwood-guest
+# - slurm_account=owner-guest
+# - slurm_partition=kingspeak-guest
+# - slurm_qos=kingspeak-guest
 # - slurm_account=elde-np
 # - slurm_partition=elde-np
-singularity-args: "-B /scratch,/usr/lib/locale/:/usr/lib/locale/"
+singularity-args: "-B /usr/lib/locale/:/usr/lib/locale/"

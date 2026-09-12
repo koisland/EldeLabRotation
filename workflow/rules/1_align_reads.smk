@@ -34,7 +34,7 @@ else:
         shell:
             """
             zcat -f {input.asm} > {output.asm}
-            samtools faidx {input.asm}
+            samtools faidx {output.asm}
             """
 
     rule self_aln_merge_read_asm_alignments:
