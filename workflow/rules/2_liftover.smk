@@ -43,7 +43,7 @@ rule generate_chain_file:
     input:
         expand(rules.asm_ref_bam_to_paf.output, ref=REF, sm="{sm}"),
     output:
-        temp(join(LIFTOVER_OUTDIR, REF, "chain", "{sm}.chain")),
+        join(LIFTOVER_OUTDIR, REF, "chain", "{sm}.chain"),
     log:
         join(LIFTOVER_LOGDIR, f"chain_{REF}_{{sm}}.log"),
     benchmark:

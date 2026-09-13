@@ -39,21 +39,24 @@ rule run_pbsv:
         bam=rules.self_aln_merge_read_asm_alignments.output.alignment,
         ref=rules.self_aln_merge_asm_files.output.asm,
     output:
-        sig=join(CALL_VAR_OUTDIR, "{sm}_pbsv.svsig.gz"),
-        vcf=join(CALL_VAR_OUTDIR, "{sm}_pbsv.vcf"),
+        vcf=join(CALL_VAR_OUTDIR, "{sm}_pbsv.vcf.gz"),
     log:
         join(CALL_VAR_LOGDIR, "run_pbsv_{sm}.log"),
     benchmark:
         join(CALL_VAR_BMKDIR, "run_pbsv_{sm}.tsv")
     conda:
         "../envs/env.yaml"
+    params:
+        vcf_uncompressed=lambda wc, output: output.vcf.replace(".gz", ""),
+        sig=join(CALL_VAR_OUTDIR, "{sm}_pbsv.svsig.gz"),
     threads: config["call_variants"]["threads_pbsv"]
     resources:
         mem=config["call_variants"]["mem_pbsv"],
     shell:
         """
-        pbsv discover {input.bam} {output.sig} &>{log}
-        pbsv call -j {threads} {input.ref} {output.sig} {output.vcf} &>>{log}
+        pbsv discover {input.bam} {params.sig} &>{log}
+        pbsv call -j {threads} {input.ref} {params.sig} {params.vcf_uncompressed} &>>{log}
+        bgzip {params.vcf_uncompressed} && tabix -p vcf {output.vcf}
         """
 
 
@@ -75,6 +78,8 @@ rule phase_variants_bam:
     conda:
         "../envs/env.yaml"
     threads: config["call_variants"]["threads_hiphase"]
+    params:
+        opt_args_hiphase=config["call_variants"]["opt_args_hiphase"],
     resources:
         mem=config["call_variants"]["mem_hiphase"],
     shell:
@@ -88,7 +93,7 @@ rule phase_variants_bam:
             --output-bam {output.hbam} \
             --reference {input.ref} \
             --threads {threads} \
-            --ignore-read-groups &>{log}
+            --ignore-read-groups {params.opt_args_hiphase} &>{log}
         """
 
 
