@@ -14,6 +14,7 @@ seqkit split -i -O "${split_dir}" "${fa}" --by-id-prefix "split_"
 for file in "${split_dir}"/split_*.gz; do
     # https://github.com/yukiteruono/pbsim3/blob/master/data/ERRHMM-RSII.model
     gunzip ${file} || true
+    gunzip exp/simulate_inversion/QSHMM-RSII.model.gz || true
     file_nogz=$(echo "${file}" | sed 's/.gz//g')
     bname_file_nogz=$(basename "${file_nogz}" .fa | sed -e 's/split_//g' -e 's/__/:/g')
     pbsim --strategy wgs \

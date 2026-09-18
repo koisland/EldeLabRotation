@@ -13,3 +13,6 @@ RM_*
 # deepvariant
 .keras
 .parallel
+
+# others
+out*

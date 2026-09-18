@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Bound};
+use std::{collections::HashMap, eprintln, ops::Bound};
 
 use eyre::bail;
 use itertools::Itertools;
@@ -37,6 +37,7 @@ pub(crate) fn get_aligned_pairs(
             }
             // Track indels and softclips.
             Kind::Pad | Kind::Insertion | Kind::SoftClip => {
+                pairs.push((qpos, pos, op));
                 qpos += l;
                 continue;
             }
@@ -95,11 +96,11 @@ fn generate_mismatch_dag(aln: &str, region: Region) -> eyre::Result<()> {
     // Global metrics
     let mut mapq: Vec<usize> = vec![0; length + 1];
     let mut cov: Vec<usize> = vec![0; length + 1];
+    let mut softclip: Vec<usize> = vec![0; length + 1];
 
     for (i, rec) in query
         .records()
         .flatten()
-        .filter(|aln| !aln.flags().contains(Flags::SECONDARY))
         .enumerate()
     {
         let cg: bam::record::Cigar<'_> = rec.cigar();
@@ -123,11 +124,15 @@ fn generate_mismatch_dag(aln: &str, region: Region) -> eyre::Result<()> {
             .filter(|(_, refpos, _)| *refpos >= st && *refpos <= end)
         {
             let ipos = refpos - st;
-            let nt = seq.get(qpos).map(char::from).unwrap();
             let cnt = match kind {
-                Kind::Insertion | Kind::SoftClip => 0,
+                Kind::Insertion => 0, 
+                Kind::SoftClip => {
+                    softclip[ipos] += 1;
+                    0
+                },
                 Kind::SequenceMatch | Kind::Deletion => 1,
                 Kind::SequenceMismatch => {
+                    let nt = seq.get(qpos).map(char::from).unwrap();
                     // Add node for refpos and the nt.
                     let wt = PosNt(refpos, nt);
                     let node_idx = get_or_add_node(wt, &mut graph, &mut node_wt_map, true);
@@ -178,6 +183,10 @@ fn generate_mismatch_dag(aln: &str, region: Region) -> eyre::Result<()> {
         read_recs.insert(i, rec);
     }
 
+    eprintln!(
+        "{:?}",
+        softclip.iter().enumerate().filter_map(|(i, c)| (*c >= 2).then(|| (i+st, c))).sorted_by(|a, b| a.0.cmp(&b.0)).collect_vec()
+    );
     // Construct intervaltree of mismatched regions
     let itree_mism = Lapper::new(
         node_wt_map
@@ -282,13 +291,18 @@ fn generate_mismatch_dag(aln: &str, region: Region) -> eyre::Result<()> {
 }
 
 fn main() -> eyre::Result<()> {
-    let bam = "test/CT22_ENA_CBCUDK010000011_CBCUDK010000011.1_6335921-6341074.bam";
+    // let bam = "test/CT22_ENA_CBCUDK010000011_CBCUDK010000011.1_6335921-6341074.bam";
+    let bam = "/scratch/ucgd/lustre-labs/vollger/users/Keith/EldeLabRotation/exp/simulate_inversion/out.bam";
     // let fa = "test/CT22_ENA_CBCUDK010000011_CBCUDK010000011.1.fa.gz";
 
     // ENA_CBCUDK010000011_CBCUDK010000011.1:6334613-6342169
+    // let region = Region::new(
+    //     "ENA_CBCUDK010000011_CBCUDK010000011.1",
+    //     Position::new(6334613).unwrap()..=Position::new(6342169).unwrap(),
+    // );
     let region = Region::new(
-        "ENA_CBCUDK010000011_CBCUDK010000011.1",
-        Position::new(6334613).unwrap()..=Position::new(6342169).unwrap(),
+        "chr7_RagTag_hap1",
+        Position::new(141034557).unwrap()..=Position::new(141571769).unwrap(),
     );
     generate_mismatch_dag(bam, region)?;
     Ok(())
