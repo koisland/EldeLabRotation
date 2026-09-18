@@ -1,0 +1,6 @@
+*
+!.gitignore
+!representative_tcaf.fa.gz*
+!*.py
+!*.sh
+!*.md

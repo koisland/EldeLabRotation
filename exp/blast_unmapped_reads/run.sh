@@ -2,10 +2,6 @@
 
 set -euo pipefail
 
-# Update pixi.toml
-# repeatmasker = "==4.1.2.p1"
-# blast = { version = ">=2.16.0,<3", channel = "bioconda" }
-
 wd=$(dirname $0)
 bam="${1}"
 ref="${2}"
