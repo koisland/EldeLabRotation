@@ -46,12 +46,12 @@ rule run_pbsv:
         join(CALL_VAR_BMKDIR, "run_pbsv_{sm}.tsv")
     conda:
         "../envs/env.yaml"
-    params:
-        vcf_uncompressed=lambda wc, output: output.vcf.replace(".gz", ""),
-        sig=join(CALL_VAR_OUTDIR, "{sm}_pbsv.svsig.gz"),
     threads: config["call_variants"]["threads_pbsv"]
     resources:
         mem=config["call_variants"]["mem_pbsv"],
+    params:
+        vcf_uncompressed=lambda wc, output: output.vcf.replace(".gz", ""),
+        sig=join(CALL_VAR_OUTDIR, "{sm}_pbsv.svsig.gz"),
     shell:
         """
         pbsv discover {input.bam} {params.sig} &>{log}
@@ -78,10 +78,10 @@ rule phase_variants_bam:
     conda:
         "../envs/env.yaml"
     threads: config["call_variants"]["threads_hiphase"]
-    params:
-        opt_args_hiphase=config["call_variants"]["opt_args_hiphase"],
     resources:
         mem=config["call_variants"]["mem_hiphase"],
+    params:
+        opt_args_hiphase=config["call_variants"]["opt_args_hiphase"],
     shell:
         """
         hiphase \

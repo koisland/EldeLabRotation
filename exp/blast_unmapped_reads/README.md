@@ -11,3 +11,6 @@ Test via:
 pushd exp/blast_unmapped_reads
 bash run.sh input.bam input_ref.fa chr7:1-1000
 ```
+
+## Outcome
+Nothing useful. Few reads (100s) and no large hits for gene of interest.

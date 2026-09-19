@@ -15,6 +15,7 @@ bash exp/simulate_inversion/existing_haps_generate_sim.sh \
 Will create directories:
 ```
 exp/simulate_inversion/fasta/
+├── ...
 └── split_NA21093#2#CM089609.1__144539366-145195716.fa
 exp/simulate_inversion/sim/
 ├── ...
@@ -34,12 +35,50 @@ bash exp/simulate_inversion/existing_haps_align_rgn.sh \
     <(zcat NA21093#2#CM089609.1:144539366-145195716_0001.fq.gz)
 ```
 
-## Simulated inversions/duplications from donor haplotypes
+## Simulated inversions from donor haplotypes
 Drawing dotplots with `python` and `minimap2`
 * We use recommended parameters (https://github.com/lh3/minimap2/issues/106) for dotplot visualization.
 
+### Inversion (simple)
 ```bash
-python exp/simulate_inversion/denovo_inv_create.py \
--f "exp/simulate_inversion/fasta/split_HG00272#2#CM094217.1__145896774-146653873.fa" \
--s 42
+in_fa="exp/simulate_inversion/fasta/split_HG03270#2#CM089914.1__144217873-144713727.fa"
+out_fa="out_after_inv.fa"
+python exp/simulate_inversion/denovo_inv_create.py -f "${in_fa}" -s 42
+realpath "${out_fa}"
 ```
+
+Output fasta file will have region inverted as comment. This is a ~141 kbp inversion.
+```
+>inv_HG03270#2#CM089914.1:144217873-144713727 145976-287196
+GACCCGGGAGAGCAGCCGCTTGGGGTTAAAGACCAAAGATGGGCCTGGCCAGTCGATAG...
+```
+
+The self dotplots before and after.
+![](out_inv_dotplot.png)
+
+
+Comparing before and after inversion with [`SafFire`](https://www.vollgerlab.com/SafFire/#dataset=USER&ref=USER_REF&query=USER_QUERY).
+```bash
+out_saffire_bed="out_saffire_before_after_inv_cmp.bed"
+minimap2 --eqx -c "${in_fa}" "${out_fa}" \
+  | rb trim-paf | rb break-paf -m 5000 \
+  | rb orient | rb filter --paired-len 100000 \
+  | rb stats --paf > "${out_saffire_bed}"
+```
+![](out_saffire_before_after_inv_cmp.png)
+> Inversion breakpoint visibles
+
+Also with [`tenten`](https://github.com/ocxtal/tenten).
+```bash
+# cargo install --git https://github.com/ocxtal/tenten.git
+# self-identity
+tenten -s "${in_fa}" -b 500 -o "out_tenten_before.png"
+tenten -s "${out_fa}" -b 500 -o "out_tenten_after_inv.png"
+tenten "${in_fa}" "${out_fa}" -b 500 -o "out_tenten_before_after_inv_cmp.png"
+```
+
+|before (self)|after (self)|cmp (y:after, x:before)|
+|-|-|-|
+|![](out_tenten_before.png)|![](out_tenten_after_inv.png)|![](out_tenten_before_after_inv_cmp.png)|
+
+### Inversion ()
