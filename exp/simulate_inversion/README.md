@@ -42,8 +42,8 @@ Drawing dotplots with `python` and `minimap2`
 ### Inversion (simple)
 ```bash
 in_fa="exp/simulate_inversion/fasta/split_HG03270#2#CM089914.1__144217873-144713727.fa"
-out_fa="out_after_inv.fa"
-python exp/simulate_inversion/denovo_inv_create.py -f "${in_fa}" -s 42
+out_fa="exp/simulate_inversion/out_after_inv.fa"
+python exp/simulate_inversion/denovo_inv_create.py -f "${in_fa}" -s 42 -o "exp/simulate_inversion/out"
 realpath "${out_fa}"
 ```
 
@@ -59,22 +59,21 @@ The self dotplots before and after.
 
 Comparing before and after inversion with [`SafFire`](https://www.vollgerlab.com/SafFire/#dataset=USER&ref=USER_REF&query=USER_QUERY).
 ```bash
-out_saffire_bed="out_saffire_before_after_inv_cmp.bed"
+out_saffire_bed="exp/simulate_inversion/out_saffire_before_after_inv_cmp.bed"
 minimap2 --eqx -c "${in_fa}" "${out_fa}" \
   | rb trim-paf | rb break-paf -m 5000 \
   | rb orient | rb filter --paired-len 100000 \
   | rb stats --paf > "${out_saffire_bed}"
 ```
 ![](out_saffire_before_after_inv_cmp.png)
-> Inversion breakpoint visibles
 
 Also with [`tenten`](https://github.com/ocxtal/tenten).
 ```bash
 # cargo install --git https://github.com/ocxtal/tenten.git
 # self-identity
-tenten -s "${in_fa}" -b 500 -o "out_tenten_before.png"
-tenten -s "${out_fa}" -b 500 -o "out_tenten_after_inv.png"
-tenten "${in_fa}" "${out_fa}" -b 500 -o "out_tenten_before_after_inv_cmp.png"
+tenten -s "${in_fa}" -b 500 -o "exp/simulate_inversion/out_tenten_before.png"
+tenten -s "${out_fa}" -b 500 -o "exp/simulate_inversion/out_tenten_after_inv.png"
+tenten "${in_fa}" "${out_fa}" -b 500 -o "exp/simulate_inversion/out_tenten_before_after_inv_cmp.png"
 ```
 
 |before (self)|after (self)|cmp (y:after, x:before)|

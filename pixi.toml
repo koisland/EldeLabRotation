@@ -23,6 +23,7 @@ minimap2 = "==2.28"
 polars = ">=1.44.2,<2"
 pbsim3 = ">=3.0.5,<4"
 rustybam = ">=0.2.2,<0.3"
+matplotlib-base = ">=3.11.2,<4"
 
 [pypi-dependencies]
 pysam = ">=0.24.1, <0.25"

@@ -172,11 +172,14 @@ def generate_inversion(
         midpt_1 = interm
 
     print(f"Inverting the region of {midpt_1}-{midpt_2}", file=sys.stderr)
-    prev_seq = fasta.fetch(chrom, 0, midpt_1 + 1)
-    seq = fasta.fetch(chrom, midpt_1, midpt_2 + 1)
-    inv_seq = str(seq.translate(nt_table))
-    next_seq = fasta.fetch(chrom, midpt_2, seq_len + 1)
+
+    prev_seq = fasta.fetch(chrom, 0, midpt_1)
+    seq = fasta.fetch(chrom, midpt_1, midpt_2)
+    inv_seq = seq[::-1].translate(nt_table)
+    next_seq = fasta.fetch(chrom, midpt_2, seq_len)
     final_seq = prev_seq + inv_seq + next_seq
+
+    assert len(final_seq) == row_initial_paf["tlen"],  f"Inverted seq not equal: {len(final_seq)} != {row_initial_paf["tlen"]}"
 
     return pysam.FastxRecord(
         f"inv_{chrom}", sequence=final_seq, comment=f"{midpt_1}-{midpt_2}"
