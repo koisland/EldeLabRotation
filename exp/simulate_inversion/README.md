@@ -39,6 +39,14 @@ bash exp/simulate_inversion/existing_haps_align_rgn.sh \
 Drawing dotplots with `python` and `minimap2`
 * We use recommended parameters (https://github.com/lh3/minimap2/issues/106) for dotplot visualization.
 
+```bash
+sample=""
+# Must run pipeline first as expects the following files to exist.
+# * "results/align/${sample}.bam"
+# * "results/align/${sample}.fa"
+bash denovo_inv_create_and_seed.sh ${sample}
+```
+
 ### Inversion (simple)
 ```bash
 in_fa="exp/simulate_inversion/fasta/split_HG03270#2#CM089914.1__144217873-144713727.fa"
