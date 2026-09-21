@@ -10,3 +10,6 @@
 	path = workflow/rules/asm-to-reference-alignment
 	url = https://github.com/koisland/asm-to-reference-alignment.git
 	ignore = dirty
+[submodule "workflow/scripts/RECallS"]
+	path = workflow/scripts/RECallS
+	url = git@github.com:koisland/RECallS.git
