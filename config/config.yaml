@@ -34,16 +34,13 @@ call_variants:
   threads_hiphase: 8
   mem_hiphase: 40G
 
-# # Annotate repeats (RepeatMasker) and SDs (biser)
-# annot:
-#   threads_rm: 2
-#   mem_rm: 8G
-#   # RepeatMasker species
-#   engine_rm: rmblast
-#   species_rm: primates
-#   # biser settings
-#   threads_biser: 4
-#   mem_biser: 300G
+# Annotate low-complexity regions (longdust) and SDs (biser)
+annot:
+  # longdust settings
+  mem_longdust: 8G
+  # biser settings
+  threads_biser: 4
+  mem_biser: 300G
 
 liftover:
   # Used for liftover bed and SafFire

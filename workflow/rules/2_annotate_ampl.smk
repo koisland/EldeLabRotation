@@ -1,5 +1,4 @@
 ANNOT_OUTDIR = join(config["output_dir"], "annot")
-SPLIT_MULTIFA_DIR = join(ANNOT_OUTDIR, "fa")
 ANNOT_LOGDIR = join(config["logs_dir"], "annot")
 ANNOT_BMKDIR = join(config["benchmarks_dir"], "annot")
 
@@ -11,11 +10,8 @@ ANNOT_CFG = {
     "output_dir": ANNOT_OUTDIR,
     "log_dir": ANNOT_LOGDIR,
     "benchmark_dir": ANNOT_BMKDIR,
-    "repeatmasker": {
-        "species": config["annot"]["species_rm"],
-        "engine": config["annot"]["engine_rm"],
-        "threads": config["annot"]["threads_rm"],
-        "mem": config["annot"]["mem_rm"],
+    "longdust": {
+        "mem": config["annot"]["mem_longdust"],
     },
     "biser": {
         "threads": config["annot"]["threads_biser"],

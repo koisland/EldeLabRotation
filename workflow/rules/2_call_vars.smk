@@ -81,7 +81,7 @@ rule phase_variants_bam:
     resources:
         mem=config["call_variants"]["mem_hiphase"],
     params:
-        opt_args_hiphase=config["call_variants"]["opt_args_hiphase"],
+        opt_args_hiphase=config["call_variants"].get("opt_args_hiphase", ""),
     shell:
         """
         hiphase \
