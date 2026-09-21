@@ -11,11 +11,12 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
-from typing import Sequence, Generator, TypedDict, get_type_hints
+from typing import Sequence, Generator, TypedDict, Literal, get_type_hints
 
 
 nt_table = bytes.maketrans(b"ACTGactg", b"TGACtgac")
 
+Event = Literal["inversion", "deletion"]
 
 class PAF(TypedDict):
     qname: str
@@ -159,8 +160,8 @@ def calculate_midpt(st: int, end: int) -> int:
     return midpt + st
 
 
-def generate_inversion(
-    fasta: pysam.FastaFile, chrom: str, row_initial_paf: PAF
+def generate_event(
+    fasta: pysam.FastaFile, chrom: str, row_initial_paf: PAF, typ: Event
 ) -> pysam.FastxRecord:
     seq_len = row_initial_paf["tlen"]
     # Just invert at midpt of homologous sequence
@@ -171,18 +172,29 @@ def generate_inversion(
         midpt_2 = midpt_1
         midpt_1 = interm
 
-    print(f"Inverting the region of {midpt_1}-{midpt_2}", file=sys.stderr)
+    if typ == "inversion":
+        print(f"Inverting the region of {midpt_1}-{midpt_2}", file=sys.stderr)
 
-    prev_seq = fasta.fetch(chrom, 0, midpt_1)
-    seq = fasta.fetch(chrom, midpt_1, midpt_2)
-    inv_seq = seq[::-1].translate(nt_table)
-    next_seq = fasta.fetch(chrom, midpt_2, seq_len)
-    final_seq = prev_seq + inv_seq + next_seq
+        prev_seq = fasta.fetch(chrom, 0, midpt_1)
+        seq = fasta.fetch(chrom, midpt_1, midpt_2)
+        inv_seq = seq[::-1].translate(nt_table)
+        next_seq = fasta.fetch(chrom, midpt_2, seq_len)
+        final_seq = prev_seq + inv_seq + next_seq
 
-    assert len(final_seq) == row_initial_paf["tlen"],  f"Inverted seq not equal: {len(final_seq)} != {row_initial_paf["tlen"]}"
+        assert len(final_seq) == row_initial_paf["tlen"],  f"Inverted seq not equal: {len(final_seq)} != {row_initial_paf["tlen"]}"
+    else:
+        print(f"Deleting the region of {midpt_1}-{midpt_2}", file=sys.stderr)
+
+        prev_seq = fasta.fetch(chrom, 0, midpt_1)
+        next_seq = fasta.fetch(chrom, midpt_2, seq_len)
+        final_seq = prev_seq + next_seq
+        del_seq_len = midpt_2 - midpt_1 
+        exp_final_seq_len = row_initial_paf["tlen"] - del_seq_len
+
+        assert len(final_seq) == exp_final_seq_len,  f"Deleted seq not equal: {len(final_seq)} != {exp_final_seq_len}"
 
     return pysam.FastxRecord(
-        f"inv_{chrom}", sequence=final_seq, comment=f"{midpt_1}-{midpt_2}"
+        f"{typ}_{chrom}", sequence=final_seq, comment=f"{midpt_1}-{midpt_2}"
     )
 
 
@@ -209,6 +221,14 @@ def main():
         default=0,
         help="Minimum aligned block length to use for plotting.",
     )
+    ap.add_argument(
+        "-e",
+        "--event",
+        type=str,
+        choices=["inversion", "deletion"],
+        default="inversion",
+        help="Recombination event type."
+    )
     ap.add_argument("-s", "--seed", type=int, default=None, help="Random seed.")
     ap.add_argument(
         "-o", "--output_prefix", type=str, default="./out", help="Output prefix"
@@ -218,6 +238,7 @@ def main():
     output_prefix = args.output_prefix
     min_aln_len = args.min_aln_len
     plot_min_aln_len = args.plot_min_aln_len
+    event: Event = args.event
 
     fasta = pysam.FastaFile(args.fasta)
     assert len(fasta.references) == 1, f"More than one fasta sequence in {args.fasta}"
@@ -226,13 +247,13 @@ def main():
     # Initial dotplot
     print("Running minimap2 to generate initial dotplot", file=sys.stderr)
     df_initial_paf = run_mm2_dotplot(fasta.filename)
-    df_initial_paf.write_csv(f"{output_prefix}_before_inv_dotplot.paf", separator="\t")
+    df_initial_paf.write_csv(f"{output_prefix}_before_event_dotplot.paf", separator="\t")
 
     fig, axes = plt.subplots(ncols=2, layout="constrained", figsize=(10, 1.8))
     axes: Sequence[Axes]
     draw_dotplot(axes[0], df_initial_paf, min_aln_len=plot_min_aln_len)
 
-    fig.savefig(f"{output_prefix}_inv_dotplot.png", bbox_inches="tight")
+    fig.savefig(f"{output_prefix}_event_dotplot.png", bbox_inches="tight")
 
     # Find regions to swap and induce in fasta
     random.seed(args.seed)
@@ -245,48 +266,59 @@ def main():
     rand_row = random.randint(0, df_subset_initial_paf.shape[0] - 1)
     row_initial_paf: PAF = df_subset_initial_paf.row(rand_row, named=True)
 
-    inv_seq = generate_inversion(fasta, chrom, row_initial_paf)
+    new_seq_fa = generate_event(fasta, chrom, row_initial_paf, typ=event)
 
     # Draw inverted segment on plot
-    midpt_1, midpt_2 = [int(pos) for pos in inv_seq.comment.split("-")]
+    midpt_1, midpt_2 = [int(pos) for pos in new_seq_fa.comment.split("-")]
 
     # Then run mm2 again
-    inv_fa = f"{output_prefix}_after_inv.fa"
-    with open(inv_fa, "wt") as fh:
-        fh.write(str(inv_seq) + "\n")
+    new_seq_fa_file = f"{output_prefix}_after_event.fa"
+    with open(new_seq_fa_file, "wt") as fh:
+        fh.write(str(new_seq_fa) + "\n")
 
-    df_inv_paf = run_mm2_dotplot(inv_fa)
-    df_inv_paf.write_csv(f"{output_prefix}_after_inv_dotplot.paf", separator="\t")
+    df_event_paf = run_mm2_dotplot(new_seq_fa_file)
+    df_event_paf.write_csv(f"{output_prefix}_after_event_dotplot.paf", separator="\t")
 
     # Then plot finally
-    draw_dotplot(axes[1], df_inv_paf, min_aln_len=plot_min_aln_len)
+    draw_dotplot(axes[1], df_event_paf, min_aln_len=plot_min_aln_len)
 
     # same axis length since only inversionss
     uniq_labels_handles = {}
     for i, ax in enumerate(axes):
-        # Dedup legend
-        handles, labels = ax.get_legend_handles_labels()
-        labels_handles = dict(zip(labels, handles))
-        uniq_labels_handles = uniq_labels_handles | labels_handles
-
-        # Draw inverted region
+        # Draw affected region
         if i == 0:
             arr_st = (midpt_2, midpt_2)
             arr_end = (midpt_1, midpt_1)
             ax.set_title("Before")
+            ax.annotate(
+                "",
+                xy=rotate(arr_st),
+                xytext=rotate(arr_end),
+                arrowprops=dict(facecolor="orange", shrink=0.05),
+                label="Inversion",
+                zorder=3,
+            )
         else:
             arr_st = (midpt_1, midpt_1)
             arr_end = (midpt_2, midpt_2)
             ax.set_title("After")
 
-        ax.annotate(
-            "",
-            xy=rotate(arr_st),
-            xytext=rotate(arr_end),
-            arrowprops=dict(facecolor="orange", shrink=0.05),
-            label="Inversion",
-            zorder=3,
-        )
+            if event == "inversion":
+                ax.annotate(
+                    "",
+                    xy=rotate(arr_st),
+                    xytext=rotate(arr_end),
+                    arrowprops=dict(facecolor="orange", shrink=0.05),
+                    label="Inversion",
+                    zorder=3,
+                )
+            else:
+                ax.axvline(midpt_1, linestyle="dotted", color="black", label="Deletion")
+
+        # Dedup legend
+        handles, labels = ax.get_legend_handles_labels()
+        labels_handles = dict(zip(labels, handles))
+        uniq_labels_handles = uniq_labels_handles | labels_handles
 
     fig.legend(
         handles=uniq_labels_handles.values(),
@@ -294,7 +326,7 @@ def main():
         loc="center left",
         bbox_to_anchor=(1, 0.5),
     )
-    fig.savefig(f"{output_prefix}_inv_dotplot.png", dpi=300, bbox_inches="tight")
+    fig.savefig(f"{output_prefix}_event_dotplot.png", dpi=300, bbox_inches="tight")
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ bash exp/simulate_inversion/existing_haps_align_rgn.sh \
     <(zcat NA21093#2#CM089609.1:144539366-145195716_0001.fq.gz)
 ```
 
-## Simulated inversions from donor haplotypes
+## Simulated non-allelic homologous recombination events
 Drawing dotplots with `python` and `minimap2`
 * We use recommended parameters (https://github.com/lh3/minimap2/issues/106) for dotplot visualization.
 
@@ -47,10 +47,10 @@ sample=""
 bash denovo_inv_create_and_seed.sh ${sample}
 ```
 
-### Inversion (simple)
+### Inversion
 ```bash
 in_fa="exp/simulate_inversion/fasta/split_HG03270#2#CM089914.1__144217873-144713727.fa"
-out_fa="exp/simulate_inversion/out_after_inv.fa"
+out_fa="exp/simulate_inversion/out_after_event.fa"
 python exp/simulate_inversion/denovo_inv_create.py -f "${in_fa}" -s 42 -o "exp/simulate_inversion/out"
 realpath "${out_fa}"
 ```
@@ -88,4 +88,10 @@ tenten "${in_fa}" "${out_fa}" -b 500 -o "exp/simulate_inversion/out_tenten_befor
 |-|-|-|
 |![](out_tenten_before.png)|![](out_tenten_after_inv.png)|![](out_tenten_before_after_inv_cmp.png)|
 
-### Inversion ()
+### Deletion
+```bash
+in_fa="exp/simulate_inversion/fasta/split_HG03270#2#CM089914.1__144217873-144713727.fa"
+out_fa="exp/simulate_inversion/out_del_after_event.fa"
+python exp/simulate_inversion/denovo_inv_create.py -f "${in_fa}" -s 42 -o "exp/simulate_inversion/out_del" -e deletion
+realpath "${out_fa}"
+```
