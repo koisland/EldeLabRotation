@@ -57,7 +57,7 @@ realpath "${out_fa}"
 
 Output fasta file will have region inverted as comment. This is a ~141 kbp inversion.
 ```
->inv_HG03270#2#CM089914.1:144217873-144713727 145976-287196
+>inversion_HG03270#2#CM089914.1:144217873-144713727 145976-287196
 GACCCGGGAGAGCAGCCGCTTGGGGTTAAAGACCAAAGATGGGCCTGGCCAGTCGATAG...
 ```
 

@@ -1,3 +1,4 @@
+import os
 import sys
 import math
 import pysam
@@ -245,15 +246,17 @@ def main():
     chrom = fasta.references[0]
 
     # Initial dotplot
-    print("Running minimap2 to generate initial dotplot", file=sys.stderr)
-    df_initial_paf = run_mm2_dotplot(fasta.filename)
-    df_initial_paf.write_csv(f"{output_prefix}_before_event_dotplot.paf", separator="\t")
+    paf_before = f"{output_prefix}_before_event_dotplot.paf"
+    if not os.path.exists(paf_before):
+        print("Running minimap2 to generate initial dotplot", file=sys.stderr)
+        df_initial_paf = run_mm2_dotplot(fasta.filename)
+        df_initial_paf.write_csv(paf_before, separator="\t")
+    else:
+        df_initial_paf = pl.read_csv(paf_before, separator="\t")
 
-    fig, axes = plt.subplots(ncols=2, layout="constrained", figsize=(10, 1.8))
+    fig, axes = plt.subplots(ncols=2, layout="constrained", figsize=(10, 5))
     axes: Sequence[Axes]
     draw_dotplot(axes[0], df_initial_paf, min_aln_len=plot_min_aln_len)
-
-    fig.savefig(f"{output_prefix}_event_dotplot.png", bbox_inches="tight")
 
     # Find regions to swap and induce in fasta
     random.seed(args.seed)
@@ -263,6 +266,7 @@ def main():
             f"No valid self-alignments with {min_aln_len=} and fasta file, {fasta.filename}."
         )
 
+    # TODO: Allow multiple and check no overlap.
     rand_row = random.randint(0, df_subset_initial_paf.shape[0] - 1)
     row_initial_paf: PAF = df_subset_initial_paf.row(rand_row, named=True)
 
@@ -276,8 +280,13 @@ def main():
     with open(new_seq_fa_file, "wt") as fh:
         fh.write(str(new_seq_fa) + "\n")
 
-    df_event_paf = run_mm2_dotplot(new_seq_fa_file)
-    df_event_paf.write_csv(f"{output_prefix}_after_event_dotplot.paf", separator="\t")
+    paf_after = f"{output_prefix}_before_event_dotplot.paf"
+    if not os.path.exists(paf_after):
+        print("Running minimap2 to generate event dotplot", file=sys.stderr)
+        df_event_paf = run_mm2_dotplot(new_seq_fa_file)
+        df_event_paf.write_csv(paf_after, separator="\t")
+    else:
+        df_event_paf = pl.read_csv(paf_after, separator="\t")
 
     # Then plot finally
     draw_dotplot(axes[1], df_event_paf, min_aln_len=plot_min_aln_len)
