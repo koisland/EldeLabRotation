@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 import sys
 import math
@@ -6,12 +7,14 @@ import random
 import argparse
 import tempfile
 import subprocess
+
 import polars as pl
 import matplotlib.pyplot as plt
 
 from matplotlib.axes import Axes
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
+from intervaltree.intervaltree import IntervalTree, Interval
 from typing import Sequence, Generator, TypedDict, Literal, get_type_hints
 
 
@@ -209,6 +212,20 @@ def main():
         help="Input fasta file of single region.",
     )
     ap.add_argument(
+        "-n",
+        "--ignore",
+        type=str,
+        default=None,
+        help="BED file to ignore."
+    )
+    ap.add_argument(
+        "-d",
+        "--max_dst_between",
+        type=int,
+        default=50_000,
+        help="Maximum distance between homologous intervals for inversion.",
+    )
+    ap.add_argument(
         "-l",
         "--min_aln_len",
         type=int,
@@ -239,7 +256,9 @@ def main():
     output_prefix = args.output_prefix
     min_aln_len = args.min_aln_len
     plot_min_aln_len = args.plot_min_aln_len
+    max_dst_between = args.max_dst_between
     event: Event = args.event
+    ignore_bed = args.ignore
 
     fasta = pysam.FastaFile(args.fasta)
     assert len(fasta.references) == 1, f"More than one fasta sequence in {args.fasta}"
@@ -254,19 +273,62 @@ def main():
     else:
         df_initial_paf = pl.read_csv(paf_before, separator="\t")
 
-    fig, axes = plt.subplots(ncols=2, layout="constrained", figsize=(10, 5))
+    fig, axes = plt.subplots(ncols=2, layout="constrained", figsize=(10, 3))
     axes: Sequence[Axes]
     draw_dotplot(axes[0], df_initial_paf, min_aln_len=plot_min_aln_len)
 
     # Find regions to swap and induce in fasta
+    # Calculate distance between intervals as another filter
     random.seed(args.seed)
-    df_subset_initial_paf = df_initial_paf.filter(pl.col("aln_len").ge(min_aln_len))
+    df_subset_initial_paf = (
+        df_initial_paf
+        .with_columns(
+            # If overlap
+            dst=pl.when((pl.col("tst") < pl.col("qend")) & (pl.col("tend") > pl.col("qst")))
+            .then(pl.lit(0))
+            .when(pl.col("tst") > pl.col("qst"))
+            .then(pl.col("tst") - pl.col("qend"))
+            .otherwise(pl.col("qst") - pl.col("tend"))
+        )
+        .filter(pl.col("aln_len").ge(min_aln_len) & pl.col("dst").le(max_dst_between))
+    )
     if df_subset_initial_paf.is_empty():
         raise RuntimeError(
             f"No valid self-alignments with {min_aln_len=} and fasta file, {fasta.filename}."
         )
 
     # TODO: Allow multiple and check no overlap.
+    if ignore_bed:
+        df_ignore_bed = pl.read_csv(
+            ignore_bed,
+            separator="\t",
+            new_columns=["#chrom", "st", "end"],
+            comment_prefix="#",
+            has_header=False
+        ).select("#chrom", "st", "end")
+
+        itree_ignore_bed = defaultdict(IntervalTree)
+        for chrom, st, end in df_ignore_bed.iter_rows():
+            itree_ignore_bed[chrom].add(Interval(st, end))
+
+        valid_paf_rows = []
+        row: PAF
+        print(f"Initial valid alignments: {df_subset_initial_paf.shape[0]}")
+        for row in df_subset_initial_paf.iter_rows(named=True):
+            chrom = row["qname"]
+            qst = row["qst"]
+            qend = row["qend"]
+            tst = row["tst"]
+            tend = row["tend"]
+            itree_chrom_ignore = itree_ignore_bed[chrom]
+            # Need to add filter on length.
+            if itree_chrom_ignore.overlaps(qst, qend) or itree_chrom_ignore.overlaps(tst, tend):
+                continue
+            valid_paf_rows.append(row)
+
+        df_subset_initial_paf = pl.DataFrame(valid_paf_rows, orient="row")
+        print(f"Post BED filtering valid alignments: {df_subset_initial_paf.shape[0]}")
+
     rand_row = random.randint(0, df_subset_initial_paf.shape[0] - 1)
     row_initial_paf: PAF = df_subset_initial_paf.row(rand_row, named=True)
 

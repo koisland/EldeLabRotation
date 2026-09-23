@@ -24,6 +24,7 @@ polars = ">=1.44.2,<2"
 rustybam = ">=0.2.2,<0.3"
 matplotlib-base = ">=3.11.2,<4"
 badread = { version = ">=0.4.2,<0.5", channel = "bioconda" }
+intervaltree = ">=3.2.1,<4"
 
 [pypi-dependencies]
 pysam = ">=0.24.1, <0.25"
