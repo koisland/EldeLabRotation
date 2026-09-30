@@ -14,6 +14,13 @@ module load apptainer
 pixi install
 ```
 
+Compile [`RECallS`](https://github.com/koisland/RECallS) with `rustc` >=1.98.0.
+```bash
+# To install Rust
+# curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+cargo build --release -m workflow/scripts/RECallS/Cargo.toml
+```
+
 ## Config
 Specify samples for DSA read alignment.
 * See https://github.com/logsdon-lab/Snakemake-Aligner for options
@@ -45,7 +52,10 @@ Currently, this pipeline just does a variety of annotation steps:
 
 #### `annot`
 * repeat masking and segmental duplication annotation with `RepeatMasker` and `biser`
-    * TODO: add trf and windowmasker
+    * TODO: get biser to not eat up memory
+
+#### `call_nahr`
+* Call putative intrachromosomal non-allelic homologous recombination events with `RECallS`.
 
 Comment out optional sections (`annot`) you don't want:
 ```yaml
@@ -71,3 +81,4 @@ pixi run snakemake \
 
 ## Limitations
 * If using whole testis, no way to determine germline vs somatic tissues. Previous Schierup study is not reproducible as provided uBAMs do not have methylation information/kinetics.
+* Cannot fully validate NAHR events found.

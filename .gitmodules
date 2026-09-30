@@ -13,3 +13,4 @@
 [submodule "workflow/scripts/RECallS"]
 	path = workflow/scripts/RECallS
 	url = git@github.com:koisland/RECallS.git
+	ignore = dirty

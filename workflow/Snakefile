@@ -2,11 +2,13 @@
 include: "rules/0_common.smk"
 include: "rules/1_align_reads.smk"
 include: "rules/2_liftover.smk"
+include: "rules/3_call_nahr_events.smk"
 
 
 outputs = [
     rules.read_align_all.input,
     rules.liftover_all.input,
+    rules.detect_nahr_events_all.input,
 ]
 
 if config.get("annot"):
@@ -16,6 +18,7 @@ if config.get("annot"):
     outputs.append(
         rules.annote_ampl_all.input,
     )
+
 
 if config.get("call_variants"):
 

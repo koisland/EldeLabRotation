@@ -64,3 +64,8 @@ liftover:
     sd:
       path: /scratch/ucgd/lustre-labs/vollger/users/Keith/EldeLabRotation/data/annot/human/segDups_2024.bed
       liftover_args: -bedPlus=9 # -multiple
+
+call_nahr:
+  threads: 8
+  mem: 10G
+  recalls_bin: workflow/scripts/RECallS/target/release/RECallS
