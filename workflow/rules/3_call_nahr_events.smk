@@ -1,6 +1,6 @@
 CALL_NAHR_OUTDIR = join(config["output_dir"], "call_nahr")
 CALL_NAHR_LOGDIR = join(config["logs_dir"], "call_nahr")
-CALL_NAHR_LOGDIR = join(config["benchmarks_dir"], "call_nahr")
+CALL_NAHR_BMKDIR = join(config["benchmarks_dir"], "call_nahr")
 
 
 # workflow/scripts/RECallS/target/release/RECallS
@@ -16,7 +16,7 @@ rule detect_nahr_putative_events:
     log:
         join(CALL_NAHR_LOGDIR, "detect_nahr_put_events_{sm}.log"),
     benchmark:
-        join(CALL_NAHR_LOGDIR, "detect_nahr_put_events_{sm}.tsv")
+        join(CALL_NAHR_BMKDIR, "detect_nahr_put_events_{sm}.tsv")
     conda:
         "../envs/env.yaml"
     threads: config["call_nahr"]["threads"]
