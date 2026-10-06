@@ -3,6 +3,9 @@ Generate simulated reads to observe read alignment patterns in ampliconic region
 * Existing haplotypes
 * Simulated inversions/duplications from donor haplotype
 
+> [!NOTE]
+> Use updated script here: https://github.com/koisland/RECallS/tree/main/test/amplicon
+
 ## Existing haplotypes
 Simulate PacBio HiFi reads of existing haplotypes.
 * using `pbsim`.
