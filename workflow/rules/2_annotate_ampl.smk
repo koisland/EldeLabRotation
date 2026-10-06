@@ -13,10 +13,10 @@ ANNOT_CFG = {
     "longdust": {
         "mem": config["annot"]["mem_longdust"],
     },
-    "biser": {
-        "threads": config["annot"]["threads_biser"],
-        "mem": config["annot"]["mem_biser"],
-    },
+    # "biser": {
+    #     "threads": config["annot"]["threads_biser"],
+    #     "mem": config["annot"]["mem_biser"],
+    # },
 }
 
 

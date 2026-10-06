@@ -3,19 +3,16 @@ import argparse
 import polars as pl
 import pyideogram as pyid
 import matplotlib.pyplot as plt
-import matplotlib.patheffects as pe
 
-from typing import Any
 from matplotlib.axes import Axes
-from matplotlib import cbook
 from matplotlib.colors import rgb2hex
-from matplotlib.patches import FancyBboxPatch, Patch
-from pyideogram.matplotlib_extension import SideRound
+from matplotlib.patches import Patch
 
 
 BAND_COLORS = pyid.BANDCOL | {"none": (1.0, 1.0, 1.0)}
 LBL_KWARGS = dict(rotation=0, ha="right", va="center")
-
+CHROM_NAMES = [*(str(i) for i in range(1, 23)), "X", "Y"]
+BED9_COLS = ["#chrom", "chromStart", "chromEnd", "name", "score", "strand", "thickstart", "thickEnd", "itemRgb"]
 
 logger = logging.getLogger(__name__)
 
@@ -37,93 +34,59 @@ def minimalize_ax(ax: Axes, *, remove_ticks: bool = False) -> None:
         )
 
 
-def draw_ideogramh_no_cytobands(
-    ax: Axes, chrom: str, length: int, textkwargs: dict[str, Any] = {}, **ideokwargs
-):
-    ideokwargs = cbook.normalize_kwargs(ideokwargs, Patch)
-    ideokwargs = {"edgecolor": "k"} | ideokwargs
-    barpatches = ax.barh(
-        [chrom],
-        length,
-        1,
-        0,
-        color=BAND_COLORS["gneg"],
-        **ideokwargs,
-    )
-    cornerref = (0, 3, 1, 2)
-    for val in [
-        "edgecolor",
-        "linewidth",
-        "hatch",
-        "xerr",
-        "yerr",
-        "error_kw",
-        "ecolor",
-        "capsize",
-        "orientation",
-    ]:
-        ideokwargs.pop(val, None)
-
-    fs = 5
-    textkwargs = {
-        "path_effects": [
-            pe.withStroke(linewidth=fs / 3, foreground="white", alpha=0.8)
-        ],
-        "fontsize": fs,
-        "va": "center_baseline",
-        "ha": "center",
-        "weight": "bold",
-        "clip_on": True,
-    } | textkwargs
-
-    figW, figH = ax.get_figure().get_size_inches()
-    _, _, w, h = ax.get_position().bounds
-    disp_ratio = (figW * w) / (figH * h)
-    ratio = ax.get_data_ratio() * disp_ratio
-    # Get patch
-    patch = barpatches[0]
-    bb = patch.get_bbox()
-    patch.remove()
-    Box = SideRound(
-        xround=min([((0.55 * 0.9) / ratio) / bb.width, 2]),
-        yround=0.9,
-        corners=cornerref,
-    )
-    fp = FancyBboxPatch(
-        (bb.xmin, bb.ymin),
-        abs(bb.width),
-        abs(bb.height),
-        boxstyle=Box,
-        ec=patch.get_edgecolor(),
-        fc=patch.get_facecolor(),
-        linewidth=patch.get_linewidth(),
-        hatch=patch.get_hatch(),
-        label=patch.get_label(),
-    )
-    fp._internal_update(ideokwargs)
-    ax.add_patch(fp)
-
-
-def create_ideogram(args: argparse.Namespace) -> int:
+def create_ideogram(
+    infile: str,
+    annot: str,
+    fai: str,
+    cytobands: str,
+    output_prefix: str,
+) -> int:
     df_calls = pl.read_csv(
-        args.infile,
+        infile,
         separator="\t",
         has_header=False,
         comment_prefix="#",
-        columns=list(range(9)),
-        schema=dict(BED9P_COLS[0:9]),
+        new_columns=BED9_COLS,
         truncate_ragged_lines=True,
     ).with_columns(length=pl.col("chromEnd") - pl.col("chromStart"))
 
-    df_fai = df_calls.group_by(["#chrom"]).agg(
-        length=pl.col("chromEnd").max() - pl.col("chromStart").min()
+    df_annot = pl.read_csv(
+        annot,
+        separator="\t",
+        has_header=False,
+        comment_prefix="#",
+        new_columns=BED9_COLS,
+        truncate_ragged_lines=True,
     )
-    fai_map = dict(df_fai.iter_rows())
-    if args.cytobands:
-        cytobands = pyid.dataloader.load_cytobands(args.cytobands)
-    else:
-        cytobands = None
 
+    df_fai = (
+        pl.read_csv(
+            fai,
+            has_header=False,
+            separator="\t",
+            columns=[0, 1],
+            new_columns=["#chrom", "length"]
+        )
+        .filter(pl.col("#chrom").str.contains("^chr([0-9XY]+)_RagTag"))
+        .with_columns(
+            chrom_name=pl.col("#chrom").str.extract("^chr([0-9XY]+)")
+        )
+        .cast({"chrom_name": pl.Enum(CHROM_NAMES)})
+        .drop_nulls()
+        .sort(by="chrom_name")
+        .with_columns(
+            row=pl.col("chrom_name").rle_id(),
+            col=pl.col("#chrom").str.extract("hap(1|2)").cast(pl.UInt32) - 1
+        )
+    )
+    nrows = df_fai["row"].max() + 1
+    df_cytobands = pl.read_csv(
+        cytobands,
+        separator="\t",
+        has_header=False,
+        new_columns=["#chrom", "chromStart", "chromEnd"]
+    )
+    
     color_key = {
         name: rgb2hex([int(e) / 255.0 for e in itemRgb.split(",")])
         if not itemRgb.startswith("#")
@@ -131,111 +94,94 @@ def create_ideogram(args: argparse.Namespace) -> int:
         for name, itemRgb in df_calls.select("name", "itemRgb").unique().iter_rows()
     }
     max_length = df_fai["length"].max()
-    chrom_names = (
-        df_fai.filter(pl.col("length") > args.filter_length)
-        .sort(by="length", descending=True)["#chrom"]
-        .unique(maintain_order=True)
-    )
-    logger.info(f"Plotting {len(chrom_names)} chromosomes.")
-    if chrom_names.is_empty():
-        return 1
 
     # chrom, calls, spacer
-    base_height_ratios = [1.0, 0.66]
-    width_ratios = [0.1, 0.9]
+    base_height_ratios = [1.0, 0.25, 1.0]
+    width_ratios = [0.5, 0.5]
     num_tracks = len(base_height_ratios)
-    height_ratios = base_height_ratios * len(chrom_names)
-    # Add extra for legend
-    height_ratios.append(3.0)
+    height_ratios = base_height_ratios * nrows
 
     fig, axes = plt.subplots(
         ncols=len(width_ratios),
-        # 1 additional track for legend
-        nrows=len(chrom_names) * num_tracks + 1,
-        figsize=(20, len(chrom_names) * args.track_height),
+        nrows=nrows * num_tracks,
+        figsize=(20, nrows * 0.75),
         height_ratios=height_ratios,
         width_ratios=width_ratios,
+        layout="constrained"
     )
-    fig.subplots_adjust(wspace=0.02)
 
-    ax_col_idx_stats = 0
-    ax_col_idx_chrom = 1
-
-    for chrom_name_idx, chrom_name in enumerate(chrom_names):
+    for row in df_fai.iter_rows(named=True):
+        chrom_name = row["#chrom"]
         df_chrom_calls = df_calls.filter(pl.col("#chrom") == chrom_name)
-        chrom_length = fai_map[chrom_name]
+        df_chrom_annot = df_annot.filter(pl.col("#chrom") == chrom_name)
+        chrom_length = row["length"]
 
-        logger.info(
-            f"On contig #{chrom_name_idx + 1} {chrom_name} ({chrom_length // 1_000_000} Mbp) ..."
-        )
-        ax_row_idx_chrom = chrom_name_idx * num_tracks
-        ax_row_indices_tracks = range(
-            ax_row_idx_chrom + 1, ax_row_idx_chrom + num_tracks
-        )
+        ax_row_idx_chrom_track = row["row"] * len(base_height_ratios)
+        ax_row_idx_chrom_annot = ax_row_idx_chrom_track + 1
+        ax_row_idx_chrom = ax_row_idx_chrom_track + 2
+        ax_col_idx_chrom = row["col"]
+
         ax_chrom: Axes = axes[ax_row_idx_chrom, ax_col_idx_chrom]
-        ax_chrom_stats: Axes = axes[ax_row_idx_chrom, ax_col_idx_stats]
+        ax_chrom_annot: Axes = axes[ax_row_idx_chrom_annot, ax_col_idx_chrom]
+        ax_chrom_track: Axes = axes[ax_row_idx_chrom_track, ax_col_idx_chrom]
 
         ax_chrom.xaxis.set_tick_params(which="both", length=0, labelleft=False)
         ax_chrom.yaxis.set_tick_params(which="both", length=0)
-        # pyideogram removes xyticks
-        minimalize_ax(ax_chrom)
-        minimalize_ax(ax_chrom_stats, remove_ticks=True)
-
-        for ax_row_idx in ax_row_indices_tracks:
-            ax_track: Axes = axes[ax_row_idx, ax_col_idx_chrom]
-            ax_stats: Axes = axes[ax_row_idx, ax_col_idx_stats]
-
-            ax_track.set_xlim(0, max_length)
-            ax_track.set_ylim(0, 1)
-            minimalize_ax(ax_track, remove_ticks=True)
-            minimalize_ax(ax_stats, remove_ticks=True)
-
-            # Write stats
-            type_counts = dict(
-                df_chrom_calls.group_by(["name"])
-                .agg(length=pl.col("length").sum())
-                .iter_rows()
-            )
-            ax_stats.pie(
-                type_counts.values(),
-                colors=[color_key[typ] for typ in type_counts.keys()],
-                radius=1,
-            )
-
-            # Write regions
-            for row in df_chrom_calls.iter_rows(named=True):
-                color = color_key[row["name"]]
-                ax_track.axvspan(
-                    xmin=row["chromStart"], xmax=row["chromEnd"], color=color
-                )
-
+  
         ax_chrom.set_xlim(0, max_length)
-        if cytobands:
-            pyid.ideogramh(
-                chrom=chrom_name,
-                bands=cytobands,
-                ax=ax_chrom,
-                color=BAND_COLORS,
-                label="",
-            )
-        else:
-            draw_ideogramh_no_cytobands(
-                ax=ax_chrom, chrom=chrom_name, length=chrom_length
-            )
-
+        ax_chrom_annot.set_xlim(0, max_length)
+        ax_chrom_track.set_xlim(0, max_length)
+        ax_chrom_annot.set_ylim(0, 1)
+        ax_chrom_track.set_ylim(0, 1)
         ax_chrom.set_yticks([], [])
         ax_chrom.set_ylabel(chrom_name, **LBL_KWARGS)
 
+        minimalize_ax(ax_chrom, remove_ticks=True)
+        minimalize_ax(ax_chrom_annot, remove_ticks=True)
+        minimalize_ax(ax_chrom_track, remove_ticks=True)
+
+        # Annot
+        for row in df_chrom_annot.iter_rows(named=True):
+            color = rgb2hex([int(e) / 255.0 for e in row["itemRgb"].split(",")])
+            ax_chrom_annot.axvspan(
+                xmin=row["chromStart"], xmax=row["chromEnd"], color=color, label=row["itemRgb"]
+            )
+
+        # Write regions
+        for row in df_chrom_calls.iter_rows(named=True):
+            color = color_key[row["name"]]
+            ax_chrom_track.axvspan(
+                xmin=row["chromStart"], xmax=row["chromEnd"], color=color, label=row["name"]
+            )
+
+        # draw chrom
+        ax_chrom.axvspan(
+            xmin=0, xmax=chrom_length, color="#d3d3d3"
+        )
+        for (_, cst, cend) in df_cytobands.filter(pl.col("#chrom") == chrom_name).iter_rows():
+            ax_chrom.axvspan(
+                xmin=cst, xmax=cend, color="#8b0000"
+            )
+
+    # Segdup colors
+    legend_patches = [Patch(facecolor=color, label=lbl) for lbl, color in color_key.items()]
+    legend_patches.extend([
+        Patch(facecolor=color, label=label)
+        for label, color in zip(
+            [
+                r"<90% similarity",
+                r"90-98% similarity",
+                r"98-99% similarity",
+                r">99% similarity",
+            ],
+            ["#800080", "#808080", "#ffff00ff", "#ffa500"],
+        )
+    ])
     # Add legend.
-    ax_legend: Axes = axes[len(chrom_names) * num_tracks, ax_col_idx_chrom]
-    minimalize_ax(ax_legend, remove_ticks=True)
-    minimalize_ax(
-        axes[len(chrom_names) * num_tracks, ax_col_idx_stats], remove_ticks=True
-    )
-    ax_legend.legend(
-        handles=[Patch(facecolor=color, label=lbl) for lbl, color in color_key.items()],
-        bbox_to_anchor=(0.5, 0.5),
-        loc="center",
+    fig.legend(
+        handles=legend_patches,
+        bbox_to_anchor=(0.5, -0.01),
+        loc="upper center",
         ncol=6,
         frameon=False,
         edgecolor="black",
@@ -243,8 +189,29 @@ def create_ideogram(args: argparse.Namespace) -> int:
         handleheight=0.7,
     )
     # Reduce white space between haps
-    logger.info(f"Saving to {args.output_prefix}.(pdf|png)")
-    fig.savefig(f"{args.output_prefix}.pdf", bbox_inches="tight", dpi=600)
-    fig.savefig(f"{args.output_prefix}.png", bbox_inches="tight", dpi=600)
+    logger.info(f"Saving to {output_prefix}.(pdf|png)")
+    fig.savefig(f"{output_prefix}.pdf", bbox_inches="tight", dpi=600)
+    fig.savefig(f"{output_prefix}.png", bbox_inches="tight", dpi=600)
 
     return 0
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-i", "--infile")
+    ap.add_argument("-a", "--annot")
+    ap.add_argument("-f", "--fai")
+    ap.add_argument("-c", "--cytobands")
+    ap.add_argument("-o", "--output_prefix")
+    args = ap.parse_args()
+    return create_ideogram(
+        args.infile,
+        args.annot,
+        args.fai,
+        args.cytobands,
+        args.output_prefix,
+    )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

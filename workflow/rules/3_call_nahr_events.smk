@@ -13,6 +13,8 @@ rule detect_nahr_putative_events:
     output:
         output_inv_bed=join(CALL_NAHR_OUTDIR, "{sm}", "calls_inv.bed"),
         output_del_bed=join(CALL_NAHR_OUTDIR, "{sm}", "calls_del.bed"),
+        bam=join(CALL_NAHR_OUTDIR, "{sm}", "tagged.bam"),
+        bai=join(CALL_NAHR_OUTDIR, "{sm}", "tagged.bam.bai"),
     log:
         join(CALL_NAHR_LOGDIR, "detect_nahr_put_events_{sm}.log"),
     benchmark:
@@ -34,6 +36,7 @@ rule detect_nahr_putative_events:
             -f {input.ref} \
             -o {params.output_dir} \
             -t {threads} \
+            -g {output.bam} \
             {params.ignore_bed} 2>{log}
         """
 
