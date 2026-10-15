@@ -7,12 +7,10 @@ CALL_NAHR_BMKDIR = join(config["benchmarks_dir"], "call_nahr")
 rule detect_nahr_putative_events:
     input:
         bam=rules.self_aln_merge_read_asm_alignments.output.alignment,
-        ref=rules.self_aln_merge_asm_files.output.asm,
         bn=config["call_nahr"]["recalls_bin"],
         ignore_bed=(rules.annot_longdust.output.bed if config.get("annot") else []),
     output:
-        output_inv_bed=join(CALL_NAHR_OUTDIR, "{sm}", "calls_inv.bed"),
-        output_del_bed=join(CALL_NAHR_OUTDIR, "{sm}", "calls_del.bed"),
+        output_bed=join(CALL_NAHR_OUTDIR, "{sm}", "calls.bed"),
         bam=join(CALL_NAHR_OUTDIR, "{sm}", "tagged.bam"),
         bai=join(CALL_NAHR_OUTDIR, "{sm}", "tagged.bam.bai"),
     log:
@@ -33,7 +31,6 @@ rule detect_nahr_putative_events:
         """
         ./{input.bn} \
             -i {input.bam} \
-            -f {input.ref} \
             -o {params.output_dir} \
             -t {threads} \
             -g {output.bam} \
