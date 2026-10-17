@@ -10,7 +10,7 @@ rule detect_nahr_putative_events:
         bn=config["call_nahr"]["recalls_bin"],
         ignore_bed=(rules.annot_longdust.output.bed if config.get("annot") else []),
     output:
-        output_bed=join(CALL_NAHR_OUTDIR, "{sm}", "calls.bed"),
+        bed=join(CALL_NAHR_OUTDIR, "{sm}", "calls.bed"),
         bam=join(CALL_NAHR_OUTDIR, "{sm}", "tagged.bam"),
         bai=join(CALL_NAHR_OUTDIR, "{sm}", "tagged.bam.bai"),
     log:
@@ -23,7 +23,7 @@ rule detect_nahr_putative_events:
     resources:
         mem=config["call_nahr"]["mem"],
     params:
-        output_dir=lambda wc, output: dirname(str(output.output_inv_bed)),
+        output_dir=lambda wc, output: dirname(str(output.bed)),
         ignore_bed=lambda wc, input: (
             f"-n {input.ignore_bed}" if input.ignore_bed else ""
         ),
