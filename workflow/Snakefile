@@ -26,13 +26,14 @@ if config.get("call_variants"):
 
 
 include: "rules/3_call_nahr_events.smk"
-
+include: "rules/4_seq_ctx.smk"
 
 outputs.extend(
     [
         rules.read_align_all.input,
         rules.liftover_all.input,
         rules.detect_nahr_events_all.input,
+        rules.sequence_context_all.input,
     ]
 )
 

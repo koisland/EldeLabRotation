@@ -37,10 +37,18 @@ call_variants:
 # Annotate low-complexity regions (longdust) and SDs (biser)
 annot:
   # longdust settings
-  mem_longdust: 8G
-  # biser settings
-  threads_biser: 4
-  mem_biser: 300G
+  longdust:
+    mem: 8G
+  # # biser settings
+  # biser:
+  #   threads: 8
+  #   mem: 10G
+  # repeatmasker settings
+  repeatmasker:
+    species: human
+    engine: rmblast
+    threads: 12
+    mem: 20G
 
 liftover:
   # Used for liftover bed and SafFire

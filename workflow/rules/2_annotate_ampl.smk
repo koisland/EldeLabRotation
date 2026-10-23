@@ -10,14 +10,26 @@ ANNOT_CFG = {
     "output_dir": ANNOT_OUTDIR,
     "log_dir": ANNOT_LOGDIR,
     "benchmark_dir": ANNOT_BMKDIR,
-    "longdust": {
-        "mem": config["annot"]["mem_longdust"],
-    },
-    # "biser": {
-    #     "threads": config["annot"]["threads_biser"],
-    #     "mem": config["annot"]["mem_biser"],
-    # },
 }
+
+if config["annot"].get("longdust"):
+    ANNOT_CFG["longdust"] = {
+        "mem": config["annot"]["longdust"]["mem"],
+    }
+
+if config["annot"].get("biser"):
+    ANNOT_CFG["biser"] = {
+        "threads": config["annot"]["biser"]["threads"],
+        "mem": config["annot"]["biser"]["mem"],
+    }
+
+if config["annot"].get("repeatmasker"):
+    ANNOT_CFG["repeatmasker"] = {
+        "species": config["annot"]["repeatmasker"]["species"],
+        "engine": config["annot"]["repeatmasker"]["engine"],
+        "threads": config["annot"]["repeatmasker"]["threads"],
+        "mem": config["annot"]["repeatmasker"]["mem"],
+    }
 
 
 # TODO: TRF + windowmasker to better mask reference. Look at Eichler Lab GH

@@ -8,11 +8,15 @@ rule detect_nahr_putative_events:
     input:
         bam=rules.self_aln_merge_read_asm_alignments.output.alignment,
         bn=config["call_nahr"]["recalls_bin"],
-        ignore_bed=(rules.annot_longdust.output.bed if config.get("annot") else []),
+        ignore_bed=(
+            rules.annot_longdust.output.bed
+            if config.get("annot", {}).get("longdust")
+            else []
+        ),
     output:
         bed=join(CALL_NAHR_OUTDIR, "{sm}", "calls.bed"),
-        bam=join(CALL_NAHR_OUTDIR, "{sm}", "tagged.bam"),
-        bai=join(CALL_NAHR_OUTDIR, "{sm}", "tagged.bam.bai"),
+        # bam=join(CALL_NAHR_OUTDIR, "{sm}", "tagged.bam"),
+        # bai=join(CALL_NAHR_OUTDIR, "{sm}", "tagged.bam.bai"),
     log:
         join(CALL_NAHR_LOGDIR, "detect_nahr_put_events_{sm}.log"),
     benchmark:
@@ -33,7 +37,6 @@ rule detect_nahr_putative_events:
             -i {input.bam} \
             -o {params.output_dir} \
             -t {threads} \
-            -g {output.bam} \
             {params.ignore_bed} 2>{log}
         """
 
