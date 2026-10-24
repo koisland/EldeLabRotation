@@ -28,6 +28,7 @@ if config.get("call_variants"):
 include: "rules/3_call_nahr_events.smk"
 include: "rules/4_seq_ctx.smk"
 
+
 outputs.extend(
     [
         rules.read_align_all.input,
